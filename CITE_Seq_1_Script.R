@@ -28,67 +28,98 @@ colbig = colorRampPalette(brewer.pal(12, 'Set3'))(50)
 
 ####Load the 10X Cell Ranger output####
 #Read the 10x Cell Ranger Output
+c1_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Sample_GE_out/C1_GE/outs/filtered_feature_bc_matrix")
+c2_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Sample_GE_out/C2_GE/outs/filtered_feature_bc_matrix")
+d1_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Sample_GE_out/D1_GE/outs/filtered_feature_bc_matrix")
+d2_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Sample_GE_out/D2_GE/outs/filtered_feature_bc_matrix")
 a_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/A_WT_GE/outs/filtered_feature_bc_matrix")
 b_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/B_WT_GE/outs/filtered_feature_bc_matrix")
-c_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/C_BCL6_GE/outs/filtered_feature_bc_matrix")
-d_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/D_BCL6_GE/outs/filtered_feature_bc_matrix")
-f_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/F_E1020K_GE/outs/filtered_feature_bc_matrix")
-g_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/G_E1020K_BCL6_GE/outs/filtered_feature_bc_matrix")
-h_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/H_E1020K_BCL6_GE/outs/filtered_feature_bc_matrix")
 
 
 #Add the sample to the cell names, consistent with antibody data below
+colnames(c1_ge.data)=gsub("-1","_c1",colnames(c1_ge.data))
+colnames(c2_ge.data)=gsub("-1","_c2",colnames(c2_ge.data))
+colnames(d1_ge.data)=gsub("-1","_d1",colnames(d1_ge.data))
+colnames(d2_ge.data)=gsub("-1","_d2",colnames(d2_ge.data))
 colnames(a_ge.data)=gsub("-1","_a",colnames(a_ge.data))
-colnames(b_ge.data)=gsub("-1","_b",colnames(b_ge.data))
-colnames(c_ge.data)=gsub("-1","_c",colnames(c_ge.data))
-colnames(d_ge.data)=gsub("-1","_d",colnames(d_ge.data))
-colnames(f_ge.data)=gsub("-1","_f",colnames(f_ge.data))
-colnames(g_ge.data)=gsub("-1","_g",colnames(g_ge.data))
-colnames(h_ge.data)=gsub("-1","_h",colnames(h_ge.data))
+colnames(b_ge.data)=gsub("-1","_g",colnames(b_ge.data))
 
 
 #Uppercase the gene names for easier matching later
+rownames(c1_ge.data)=toupper(rownames(c1_ge.data))
+rownames(c2_ge.data)=toupper(rownames(c2_ge.data))
+rownames(d1_ge.data)=toupper(rownames(d1_ge.data))
+rownames(d2_ge.data)=toupper(rownames(d2_ge.data))
 rownames(a_ge.data)=toupper(rownames(a_ge.data))
 rownames(b_ge.data)=toupper(rownames(b_ge.data))
-rownames(c_ge.data)=toupper(rownames(c_ge.data))
-rownames(d_ge.data)=toupper(rownames(d_ge.data))
-rownames(f_ge.data)=toupper(rownames(f_ge.data))
-rownames(g_ge.data)=toupper(rownames(g_ge.data))
-rownames(h_ge.data)=toupper(rownames(h_ge.data))
 
 
-head(a_ge.data)
+head(c1_ge.data)
 ####Load 10X Antibody data####
 #Read the 10x Antibody output
+c1_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/C1_SP_out_2/umi_count",gene.column=1)
+c2_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/C2_SP_out_2/umi_count",gene.column=1)
+d1_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/D1_SP_out_2/umi_count",gene.column=1)
+d2_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/D2_SP_out_2/umi_count",gene.column=1)
 a_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/A_WT/umi_count",gene.column=1)
 b_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/B_WT/umi_count",gene.column=1)
-c_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/C_BCL6/umi_count",gene.column=1)
-d_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/D_BCL6/umi_count",gene.column=1)
-f_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/F_E1020K_BCL6/umi_count",gene.column=1)
-g_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/G_E1020K_BCL6/umi_count",gene.column=1)
-h_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/H_E1020K_BCL6/umi_count",gene.column=1)
 
 
 #Tidy up the rownames from the data
+rownames(c1_ab.data)=gsub("-[^-]+$","",rownames(c1_ab.data),perl=TRUE)
+rownames(c2_ab.data)=gsub("-[^-]+$","",rownames(c2_ab.data),perl=TRUE)
+rownames(d1_ab.data)=gsub("-[^-]+$","",rownames(d1_ab.data),perl=TRUE)
+rownames(d2_ab.data)=gsub("-[^-]+$","",rownames(d2_ab.data),perl=TRUE)
 rownames(a_ab.data)=gsub("-[^-]+$","",rownames(a_ab.data),perl=TRUE)
 rownames(b_ab.data)=gsub("-[^-]+$","",rownames(b_ab.data),perl=TRUE)
-rownames(c_ab.data)=gsub("-[^-]+$","",rownames(c_ab.data),perl=TRUE)
-rownames(d_ab.data)=gsub("-[^-]+$","",rownames(d_ab.data),perl=TRUE)
-rownames(f_ab.data)=gsub("-[^-]+$","",rownames(f_ab.data),perl=TRUE)
-rownames(g_ab.data)=gsub("-[^-]+$","",rownames(g_ab.data),perl=TRUE)
-rownames(h_ab.data)=gsub("-[^-]+$","",rownames(h_ab.data),perl=TRUE)
 
 #Add the Sample to the cell names in each sample
+colnames(c1_ab.data)=paste(colnames(c1_ab.data),"_c1",sep="")
+colnames(c2_ab.data)=paste(colnames(c2_ab.data),"_c2",sep="")
+colnames(d1_ab.data)=paste(colnames(d1_ab.data),"_d1",sep="")
+colnames(d2_ab.data)=paste(colnames(d2_ab.data),"_d2",sep="")
 colnames(a_ab.data)=paste(colnames(a_ab.data),"_a",sep="")
 colnames(b_ab.data)=paste(colnames(b_ab.data),"_b",sep="")
-colnames(c_ab.data)=paste(colnames(c_ab.data),"_c",sep="")
-colnames(d_ab.data)=paste(colnames(d_ab.data),"_d",sep="")
-colnames(f_ab.data)=paste(colnames(f_ab.data),"_f",sep="")
-colnames(g_ab.data)=paste(colnames(g_ab.data),"_g",sep="")
-colnames(h_ab.data)=paste(colnames(h_ab.data),"_h",sep="")
 
-head(a_ab.data)
+head(c1_ab.data)
 ####Combine 10X Cell Ranger and Antibody Data into a Suerat Object####
+
+m <- Matrix(nrow = nrow(c1_ab.data), ncol = ncol(c1_ge.data), data = 0, sparse = TRUE)
+rownames(m)=rownames(c1_ab.data)
+colnames(m)=colnames(c1_ge.data)
+common=intersect(colnames(c1_ge.data),colnames(c1_ab.data))
+m[,common]=c1_ab.data[,common]
+c1 = CreateSeuratObject(counts = c1_ge.data,project="c1", min.cells = 3)
+adt_assay <- CreateAssayObject(counts = m)
+c1[["ADT"]] <- adt_assay
+
+m <- Matrix(nrow = nrow(c2_ab.data), ncol = ncol(c2_ge.data), data = 0, sparse = TRUE)
+rownames(m)=rownames(c2_ab.data)
+colnames(m)=colnames(c2_ge.data)
+common=intersect(colnames(c2_ge.data),colnames(c2_ab.data))
+m[,common]=c2_ab.data[,common]
+c2 = CreateSeuratObject(counts = c2_ge.data,project="c2", min.cells = 3)
+adt_assay <- CreateAssayObject(counts = m)
+c2[["ADT"]] <- adt_assay
+
+m <- Matrix(nrow = nrow(d1_ab.data), ncol = ncol(d1_ge.data), data = 0, sparse = TRUE)
+rownames(m)=rownames(d1_ab.data)
+colnames(m)=colnames(d1_ge.data)
+common=intersect(colnames(d1_ge.data),colnames(d1_ab.data))
+m[,common]=d1_ab.data[,common]
+d1 = CreateSeuratObject(counts = d1_ge.data,project="d1", min.cells = 3)
+adt_assay <- CreateAssayObject(counts = m)
+d1[["ADT"]] <- adt_assay
+
+m <- Matrix(nrow = nrow(d2_ab.data), ncol = ncol(d2_ge.data), data = 0, sparse = TRUE)
+rownames(m)=rownames(d2_ab.data)
+colnames(m)=colnames(d2_ge.data)
+common=intersect(colnames(d2_ge.data),colnames(d2_ab.data))
+m[,common]=d2_ab.data[,common]
+d2 = CreateSeuratObject(counts = d2_ge.data,project="d2", min.cells = 3)
+adt_assay <- CreateAssayObject(counts = m)
+d2[["ADT"]] <- adt_assay
+
 m <- Matrix(nrow = nrow(a_ab.data), ncol = ncol(a_ge.data), data = 0, sparse = TRUE)
 rownames(m)=rownames(a_ab.data)
 colnames(m)=colnames(a_ge.data)
@@ -107,52 +138,8 @@ b = CreateSeuratObject(counts = b_ge.data,project="b", min.cells = 3)
 adt_assay <- CreateAssayObject(counts = m)
 b[["ADT"]] <- adt_assay
 
-m <- Matrix(nrow = nrow(c_ab.data), ncol = ncol(c_ge.data), data = 0, sparse = TRUE)
-rownames(m)=rownames(c_ab.data)
-colnames(m)=colnames(c_ge.data)
-common=intersect(colnames(c_ge.data),colnames(c_ab.data))
-m[,common]=c_ab.data[,common]
-c = CreateSeuratObject(counts = c_ge.data,project="c", min.cells = 3)
-adt_assay <- CreateAssayObject(counts = m)
-c[["ADT"]] <- adt_assay
 
-m <- Matrix(nrow = nrow(d_ab.data), ncol = ncol(d_ge.data), data = 0, sparse = TRUE)
-rownames(m)=rownames(d_ab.data)
-colnames(m)=colnames(d_ge.data)
-common=intersect(colnames(d_ge.data),colnames(d_ab.data))
-m[,common]=d_ab.data[,common]
-d = CreateSeuratObject(counts = d_ge.data,project="d", min.cells = 3)
-adt_assay <- CreateAssayObject(counts = m)
-d[["ADT"]] <- adt_assay
-
-m <- Matrix(nrow = nrow(f_ab.data), ncol = ncol(f_ge.data), data = 0, sparse = TRUE)
-rownames(m)=rownames(f_ab.data)
-colnames(m)=colnames(f_ge.data)
-common=intersect(colnames(f_ge.data),colnames(f_ab.data))
-m[,common]=f_ab.data[,common]
-f = CreateSeuratObject(counts = f_ge.data,project="f", min.cells = 3)
-adt_assay <- CreateAssayObject(counts = m)
-f[["ADT"]] <- adt_assay
-
-m <- Matrix(nrow = nrow(g_ab.data), ncol = ncol(g_ge.data), data = 0, sparse = TRUE)
-rownames(m)=rownames(g_ab.data)
-colnames(m)=colnames(g_ge.data)
-common=intersect(colnames(g_ge.data),colnames(g_ab.data))
-m[,common]=g_ab.data[,common]
-g = CreateSeuratObject(counts = g_ge.data,project="g", min.cells = 3)
-adt_assay <- CreateAssayObject(counts = m)
-g[["ADT"]] <- adt_assay
-
-m <- Matrix(nrow = nrow(h_ab.data), ncol = ncol(h_ge.data), data = 0, sparse = TRUE)
-rownames(m)=rownames(h_ab.data)
-colnames(m)=colnames(h_ge.data)
-common=intersect(colnames(h_ge.data),colnames(h_ab.data))
-m[,common]=h_ab.data[,common]
-h = CreateSeuratObject(counts = h_ge.data,project="h", min.cells = 3)
-adt_assay <- CreateAssayObject(counts = m)
-h[["ADT"]] <- adt_assay
-
-head(a[[]])
+head(c1[[]])
 
 ####Incoperate VDJ data####
 #Load contig file
