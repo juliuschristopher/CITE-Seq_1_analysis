@@ -42,7 +42,7 @@ colnames(c2_ge.data)=gsub("-1","_c2",colnames(c2_ge.data))
 colnames(d1_ge.data)=gsub("-1","_d1",colnames(d1_ge.data))
 colnames(d2_ge.data)=gsub("-1","_d2",colnames(d2_ge.data))
 colnames(a_ge.data)=gsub("-1","_a",colnames(a_ge.data))
-colnames(b_ge.data)=gsub("-1","_g",colnames(b_ge.data))
+colnames(b_ge.data)=gsub("-1","_b",colnames(b_ge.data))
 
 
 #Uppercase the gene names for easier matching later
@@ -54,7 +54,7 @@ rownames(a_ge.data)=toupper(rownames(a_ge.data))
 rownames(b_ge.data)=toupper(rownames(b_ge.data))
 
 
-head(c1_ge.data)
+head(b_ge.data)
 ####Load 10X Antibody data####
 #Read the 10x Antibody output
 c1_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/C1_SP_out_2/umi_count",gene.column=1)
@@ -81,7 +81,7 @@ colnames(d2_ab.data)=paste(colnames(d2_ab.data),"_d2",sep="")
 colnames(a_ab.data)=paste(colnames(a_ab.data),"_a",sep="")
 colnames(b_ab.data)=paste(colnames(b_ab.data),"_b",sep="")
 
-head(c1_ab.data)
+head(b_ab.data)
 ####Combine 10X Cell Ranger and Antibody Data into a Suerat Object####
 
 m <- Matrix(nrow = nrow(c1_ab.data), ncol = ncol(c1_ge.data), data = 0, sparse = TRUE)
@@ -139,79 +139,52 @@ adt_assay <- CreateAssayObject(counts = m)
 b[["ADT"]] <- adt_assay
 
 
-head(c1[[]])
+head(b[[]])
 
 ####Incoperate VDJ data####
 #Load contig file
+c1_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/C1_VDJ/outs/filtered_contig_annotations.csv")
+c2_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/C2_VDJ/outs/filtered_contig_annotations.csv")
+d1_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/D1_VDJ/outs/filtered_contig_annotations.csv")
+d2_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/D2_VDJ/outs/filtered_contig_annotations.csv")
 a_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/A_WT_VDJ/outs/filtered_contig_annotations.csv")
 b_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/B_WT_VDJ/outs/filtered_contig_annotations.csv")
-c_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/C_BCL6_VDJ/outs/filtered_contig_annotations.csv")
-d_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/D_BCL6_VDJ/outs/filtered_contig_annotations.csv")
-f_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/F_E1020K_VDJ/outs/filtered_contig_annotations.csv")
-g_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/G_E1020K_BCL6_VDJ/outs/filtered_contig_annotations.csv")
-h_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/H_E1020K_BCL6_VDJ/outs/filtered_contig_annotations.csv")
 
 #match barcode names with GE and ADT data
+c1_cl.data$barcode=gsub("-1","_c1",c1_cl.data$barcode)
+c2_cl.data$barcode=gsub("-1","_c2",c2_cl.data$barcode)
+d1_cl.data$barcode=gsub("-1","_d1",d1_cl.data$barcode)
+d2_cl.data$barcode=gsub("-1","_d2",d2_cl.data$barcode)
 a_cl.data$barcode=gsub("-1","_a",a_cl.data$barcode)
 b_cl.data$barcode=gsub("-1","_b",b_cl.data$barcode)
-c_cl.data$barcode=gsub("-1","_c",c_cl.data$barcode)
-d_cl.data$barcode=gsub("-1","_d",d_cl.data$barcode)
-f_cl.data$barcode=gsub("-1","_f",f_cl.data$barcode)
-g_cl.data$barcode=gsub("-1","_g",g_cl.data$barcode)
-h_cl.data$barcode=gsub("-1","_h",h_cl.data$barcode)
 
-contig_list <- list(a_cl.data, b_cl.data, c_cl.data, d_cl.data, f_cl.data, g_cl.data, h_cl.data)
+contig_list <- list(c1_cl.data, c2_cl.data, d1_cl.data, d2_cl.data, a_cl.data, b_cl.data)
 head(contig_list[[1]])
 
-#Load rearrangement file
-a_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/A_WT_VDJ/outs/airr_rearrangement.tsv")
-b_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/B_WT_VDJ/outs/airr_rearrangement.tsv")
-c_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/C_BCL6_VDJ/outs/airr_rearrangement.tsv")
-d_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/D_BCL6_VDJ/outs/airr_rearrangement.tsv")
-f_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/F_E1020K_VDJ/outs/airr_rearrangement.tsv")
-g_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/G_E1020K_BCL6_VDJ/outs/airr_rearrangement.tsv")
-h_rf.data <-  read_tsv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/H_E1020K_BCL6_VDJ/outs/airr_rearrangement.tsv")
-
-rear_list <- list(a_rf.data, b_rf.data, c_rf.data, d_rf.data, f_rf.data, g_rf.data, h_rf.data)
-head(rear_list[[1]])
-
-#Load clonotype file
-a_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/A_WT_VDJ/outs/clonotypes.csv")
-b_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/B_WT_VDJ/outs/clonotypes.csv")
-c_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/C_BCL6_VDJ/outs/clonotypes.csv")
-d_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/D_BCL6_VDJ/outs/clonotypes.csv")
-f_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/F_E1020K_VDJ/outs/clonotypes.csv")
-g_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/G_E1020K_BCL6_VDJ/outs/clonotypes.csv")
-h_clono.data <-  read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/H_E1020K_BCL6_VDJ/outs/clonotypes.csv")
-
-clono_list <- list(a_clono.data, b_clono.data, c_clono.data, d_clono.data, f_clono.data, g_clono.data, h_clono.data)
-head(clono_list[[1]])
-
 #Generate combined object
-combined <- combineBCR(contig_list, samples = c("a", "b", "c", "d", "f", "g", "h"))
+combined <- combineBCR(contig_list, samples = c("c1", "c2", "d1", "d2", "a", "b"))
 combined[[1]]
 
 str(combined)
 head(combined[[1]])
 
-#Make sure barcodes are identicla to GE and ADT data
+#Make sure barcodes are identical to GE and ADT data
+combined$c1$barcode=gsub("c1_","",combined$c1$barcode)
+combined$c2$barcode=gsub("c2_","",combined$c2$barcode)
+combined$d1$barcode=gsub("d1_","",combined$d1$barcode)
+combined$d2$barcode=gsub("d2_","",combined$d2$barcode)
 combined$a$barcode=gsub("a_","",combined$a$barcode)
 combined$b$barcode=gsub("b_","",combined$b$barcode)
-combined$c$barcode=gsub("c_","",combined$c$barcode)
-combined$d$barcode=gsub("d_","",combined$d$barcode)
-combined$f$barcode=gsub("f_","",combined$f$barcode)
-combined$g$barcode=gsub("g_","",combined$g$barcode)
-combined$h$barcode=gsub("h_","",combined$h$barcode)
 
-head(combined$a)
+head(combined$c1)
 #####Process samples as one####
-experiments=c(a,b,c,d,f,g,h)
-experiment_names=c("a","b","c","d","f","g","h")
+experiments=c(c1,c2,d1,d2,a,b)
+experiment_names=c("c1","c2","d1","d2","a","b")
 
-experiment<-merge(x= a, y=c(b,c,d,f,g,h))
+experiment<-merge(x= c1, y=c(c2,d1,d2,a,b))
 
 experiment
-tstr(experiment)
+str(experiment)
 head(experiment[[]])
 
 ####Merge seurat object with VDJ data####
@@ -234,18 +207,20 @@ DefaultAssay(experiment) <- "RNA"
 RNA_QC <- VlnPlot(experiment, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"))
 ADT_QC <- VlnPlot(experiment, features = c("nFeature_ADT", "nCount_ADT", "percent.mt"))
 
+RNA_QC
+ADT_QC
 #FeatureScatter is typically used to visualize feature-feature relationships, but can be used for anything calculated by the object, i.e. columns in object metadata, PC scores etc.
-plot1 = FeatureScatter(experiment, feature1 = "nCount_RNA", feature2 = "percent.mt") + NoLegend()  +
+feature_count.RNA_vs_percent.mt = FeatureScatter(experiment, feature1 = "nCount_RNA", feature2 = "percent.mt") + NoLegend()  +
   ylab("% of mitochondrial genes") +
   xlab("UMI counts") + 
   geom_hline(yintercept = 5) 
 
-plot2 = FeatureScatter(experiment, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") + NoLegend() +
+feature_count.RNA_vs_feature.RNA = FeatureScatter(experiment, feature1 = "nCount_RNA", feature2 = "nFeature_RNA") + NoLegend() +
   ylab("Number of genes") +
   xlab("UMI counts") + 
   geom_hline(yintercept = 200) 
 
-plot1 + plot2
+feature_count.RNA_vs_percent.mt + feature_count.RNA_vs_feature.RNA
 
 #Generally aim to filter out unique feature counts over 2,500 and less than 200; and percent.mt over 5%
 filter_seurat = function(seurat_object){
@@ -278,8 +253,6 @@ plot3 = VariableFeaturePlot(experiment)
 plot4 = LabelPoints(plot = plot3, points = top20, repel = TRUE, xnudge = 0, ynudge = 0)
 plot4
 
-#Scale data?
-
 #Cell Cycle genes
 S.genes = cc.genes.updated.2019$s.genes
 G2M.genes = cc.genes.updated.2019$g2m.genes
@@ -306,11 +279,6 @@ plot(pca_variance/sum(pca_variance),
      ylab="Proportion of variance explained", 
      xlab="Principal component")
 abline(h = 0.01) #25
-
-####Determine number of clusters####
-##luster Tree Analysis
-clustree(experiment, prefix = "RNA_snn_res.") +
-  theme(legend.position="bottom")
 
 #Cluster the cells
 experiment <- FindNeighbors(experiment, dims = 1:30)
