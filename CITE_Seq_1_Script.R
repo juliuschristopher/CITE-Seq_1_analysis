@@ -242,22 +242,15 @@ experiment[["SCT"]]
 top20 = head(VariableFeatures(experiment), 30)
 
 plot1.1 = VariableFeaturePlot(experiment)
-plot2.1 = LabelPoints(plot = plot1.1, points = top20, repel = TRUE, xnudge = 0, ynudge = 0)
-plot2.1
-
-#Find variable features
-experiment <- FindVariableFeatures(experiment, selection.method = "vst")
-top20 = head(VariableFeatures(experiment), 20)
-
-plot3 = VariableFeaturePlot(experiment)
-plot4 = LabelPoints(plot = plot3, points = top20, repel = TRUE, xnudge = 0, ynudge = 0)
-plot4
+top20_plot = LabelPoints(plot = plot1.1, points = top20, repel = TRUE, xnudge = 0, ynudge = 0)
+top20_plot
 
 #Cell Cycle genes
 S.genes = cc.genes.updated.2019$s.genes
 G2M.genes = cc.genes.updated.2019$g2m.genes
 
 experiment = CellCycleScoring(experiment, s.features=S.genes, g2m.features=G2M.genes, set.ident = TRUE)
+Idents(object = experiment) <- "old.ident"
 
 ####Dimensionality reduction -PCA####
 #Perform linear dimensional reduction (PCA)
@@ -278,7 +271,7 @@ pca_variance <- experiment@reductions$pca@stdev^2
 plot(pca_variance/sum(pca_variance), 
      ylab="Proportion of variance explained", 
      xlab="Principal component")
-abline(h = 0.01) #25
+abline(h = 0.01) #21
 
 #Cluster the cells
 experiment <- FindNeighbors(experiment, dims = 1:30)
@@ -302,11 +295,6 @@ Plot_13
 experiment <- FindMultiModalNeighbors(
   experiment, reduction.list = list("pca", "apca"), 
   dims.list = list(1:30, 1:18), modality.weight.name = "RNA.weight")
-
-#Determing resolution (cluster number) for wnn plot?
-clustree(experiment, prefix = "wsnn_res.") +
-  theme(legend.position="bottom")
-
 
 #UMPA plots for RNA, ADT and WNN
 experiment <- RunUMAP(experiment, reduction = 'pca', dims = 1:30, assay = 'RNA', 
