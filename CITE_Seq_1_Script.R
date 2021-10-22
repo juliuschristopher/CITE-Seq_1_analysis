@@ -334,7 +334,6 @@ list2=c("PTPRC","FAS","CD19","IGHM","CR2","FCER2A","CD93","CD83","CD86","IGHD","
 ##Different plotting options
 DefaultAssay(experiment) <- "RNA"
 DefaultAssay(experiment) <- "ADT"
-
 FeaturePlot(experiment, features = c("CD19", "CD4", "CD8A", "PRDM1", "PPBP", "NKG7", "CST3", "FOXP3", "B220"), reduction = "wnn.umap")
 
 RidgePlot(experiment, features = c("CD19", "CYP11A1"), ncol = 2)
@@ -342,8 +341,8 @@ RidgePlot(experiment, features = c("CD19", "CYP11A1"), ncol = 2)
 FeaturePlot(experiment, features = c("IGHV1-53", "IGKV3-4", "IGHD1-1"), reduction = "wnn.umap")
 FeaturePlot(experiment, feature = "IGHG", reduction = "wnn.umap")
 
-FeaturePlot(experiment, features = c("CD44"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "CTLA4")
+FeaturePlot(experiment, features = c("LY6A"), reduction = "wnn.umap")
+VlnPlot(experiment, feature = "RUNX1")
 ?VlnPlot
 p3
 
@@ -357,8 +356,8 @@ experiment.markers %>%
 DoHeatmap(experiment, features = top10$gene) + NoLegend()
 
 ##DE genes of individual clusters
-Cluster_11 <- FindMarkers(experiment, ident.1 = 11, assay = "RNA")
-Cluster_11_adt <- FindMarkers(experiment, ident.1 = 11, assay = "ADT")
+Cluster_3 <- FindMarkers(experiment, ident.1 = 3, assay = "RNA")
+Cluster_3_adt <- FindMarkers(experiment, ident.1 = 3, assay = "ADT")
 
 Cluster_4 <- FindMarkers(experiment, ident.1 = 4, assay = "RNA")
 Cluster_4_adt <- FindMarkers(experiment, ident.1 = 4, assay = "ADT")
@@ -368,7 +367,7 @@ Unknown_cells <- subset(experiment, idents = c(2, 12, 27, 33))
 Unknown_cells <- FindClusters(Unknown_cells, resolution = 0.8, verbose = FALSE, graph.name = "wsnn")
 Unknown_cells <- RunUMAP(Unknown_cells, dims = 1:30, reduction.name = "unknown.umap")
 DimPlot(Unknown_cells, label = TRUE, cols=colbig, reduction = "unknown.umap", label.size = 2.5) + NoLegend()
-FeaturePlot(Unknown_cells, "SOX4", reduction = "unknown.umap")
+FeaturePlot(Unknown_cells, "KLS", reduction = "unknown.umap")
 
 
 ####Clonotype analysis####
