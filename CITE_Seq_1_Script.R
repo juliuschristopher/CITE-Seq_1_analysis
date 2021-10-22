@@ -311,8 +311,6 @@ p1=DimPlot(experiment, label = TRUE,cols=colbig,reduction = "rna.umap", label.si
 p2=DimPlot(experiment, label = TRUE,cols=colbig,reduction = "adt.umap", label.size = 2.5) + NoLegend()
 p3=DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5) + NoLegend()
 
-p1|p2|p3
-
 p1
 p2
 p3
