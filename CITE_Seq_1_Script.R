@@ -15,6 +15,7 @@ library(future)
 library(alakazam)
 library(immunarch)
 library(airr)
+library(biomaRt)
 
 #Alter working capacity
 plan()
@@ -205,7 +206,8 @@ DefaultAssay(experiment) <- "RNA"
 
 #Visualize QC metrics as violin plot
 RNA_QC <- VlnPlot(experiment, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"))
-ADT_QC <- VlnPlot(experiment, features = c("nFeature_ADT", "nCount_ADT", "percent.mt"))
+ADT_QC <- VlnPlot(experiment, features = "nFeature_ADT")
+ADT_QC <- VlnPlot(experiment, features = "nCount_ADT", y.max = 10000)
 
 RNA_QC
 ADT_QC
@@ -221,6 +223,12 @@ feature_count.RNA_vs_feature.RNA = FeatureScatter(experiment, feature1 = "nCount
   geom_hline(yintercept = 200) 
 
 feature_count.RNA_vs_percent.mt + feature_count.RNA_vs_feature.RNA
+
+feature_count.ADT_vs_feature.ADT = FeatureScatter(experiment, feature1 = "nCount_ADT", feature2 = "nFeature_ADT") + NoLegend() +
+  ylab("Number of antibodies") +
+  xlab("UMI counts")
+
+feature_count.ADT_vs_feature.ADT
 
 #Generally aim to filter out unique feature counts over 2,500 and less than 200; and percent.mt over 5%
 filter_seurat = function(seurat_object){
@@ -239,7 +247,7 @@ experiment <-  filter_seurat(experiment)
 experiment = SCTransform(experiment, verbose = TRUE)
 experiment[["SCT"]]
 
-top20 = head(VariableFeatures(experiment), 30)
+top20 = head(VariableFeatures(experiment), 20)
 
 plot1.1 = VariableFeaturePlot(experiment)
 top20_plot = LabelPoints(plot = plot1.1, points = top20, repel = TRUE, xnudge = 0, ynudge = 0)
@@ -252,7 +260,7 @@ G2M.genes = cc.genes.updated.2019$g2m.genes
 experiment = CellCycleScoring(experiment, s.features=S.genes, g2m.features=G2M.genes, set.ident = TRUE)
 Idents(object = experiment) <- "old.ident"
 
-####Dimensionality reduction -PCA####
+####Dimensionality reduction - PCA####
 #Perform linear dimensional reduction (PCA)
 experiment <- RunPCA(experiment, verbose = FALSE, features = VariableFeatures(object = experiment))
 
@@ -271,12 +279,17 @@ pca_variance <- experiment@reductions$pca@stdev^2
 plot(pca_variance/sum(pca_variance), 
      ylab="Proportion of variance explained", 
      xlab="Principal component")
-abline(h = 0.01) #21
+abline(h = 0.01) #23
 
 #Cluster the cells
-experiment <- FindNeighbors(experiment, dims = 1:30)
-experiment <- FindClusters(experiment, resolution = 1.0, verbose = FALSE)
-experiment <- RunUMAP(experiment, dims = 1:30)
+experiment <- FindNeighbors(experiment, dims = 1:23)
+experiment <- FindClusters(experiment, resolution = 1.3, verbose = FALSE) #1.3 or 1.2 for the resolution
+
+#Cluster Tree Analysis
+clustree(experiment, prefix = "SCT_snn_res.") + theme(legend.position="bottom")
+
+#RNA UMAP
+experiment <- RunUMAP(experiment, dims = 1:23)
 DimPlot(experiment, label = TRUE, cols=colbig) +  ggtitle("RNA Clustering")
 
 ####Scale antibody data####
@@ -286,24 +299,41 @@ experiment <- NormalizeData(experiment, normalization.method = "CLR", margin = 2
 experiment <- ScaleData(experiment)
 experiment <- RunPCA(experiment,reduction.name = 'apca')
 
-#Visualise antobody PCA
+#Visualise antibody PCA
 print(experiment[["apca"]], dims = 1:10, nfeatures = 5)
 Plot_13 <- VizDimLoadings(experiment, dims = 1:4, reduction = "apca", nfeatures = 15)
 Plot_13
 
+plot14 <- DimPlot(experiment, reduction = "apca", dims = c(1,2), group.by = "orig.ident") + ggtitle("ADT PCA")
+plot15 <- DimPlot(experiment, reduction = "apca", dims = c(1,3), group.by = "orig.ident") + ggtitle("ADT PCA")
+plot14 + plot15
+
+DimHeatmap(experiment, dims = 1:6, cells = 500, balanced = TRUE, reduction = "apca")
+
+#Determine number of PCs for ADT assay
+apca_variance <- experiment@reductions$apca@stdev^2
+plot(apca_variance/sum(apca_variance), 
+     ylab="Proportion of variance explained", 
+     xlab="Principal component")
+abline(h = 0.01) #24
+
+#Number of clusters for UMAP?
+
 ####Combine into wnn plot####
 experiment <- FindMultiModalNeighbors(
   experiment, reduction.list = list("pca", "apca"), 
-  dims.list = list(1:30, 1:18), modality.weight.name = "RNA.weight")
+  dims.list = list(1:23, 1:24), modality.weight.name = "RNA.weight")
 
-#UMPA plots for RNA, ADT and WNN
-experiment <- RunUMAP(experiment, reduction = 'pca', dims = 1:30, assay = 'RNA', 
+#UMAP plots for RNA, ADT and WNN
+experiment <- RunUMAP(experiment, reduction = 'pca', dims = 1:23, assay = 'RNA', 
                       reduction.name = 'rna.umap', reduction.key = 'rnaUMAP_')
-experiment<- RunUMAP(experiment, reduction = 'apca', dims = 1:18, assay = 'ADT', 
+experiment<- RunUMAP(experiment, reduction = 'apca', dims = 1:24, assay = 'ADT', 
                      reduction.name = 'adt.umap', reduction.key = 'adtUMAP_')
 experiment <- RunUMAP(experiment, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
-experiment <- FindClusters(experiment, graph.name = "wsnn", algorithm = 3, resolution = 0.8, verbose = TRUE)
+experiment <- FindClusters(experiment, graph.name = "wsnn", algorithm = 3, resolution = 1.7, verbose = TRUE)
 
+#Cluster Tree Analysis of wsnn graph
+clustree(experiment, prefix = "wsnn_res.") + theme(legend.position="bottom")#1.7
 
 DefaultAssay(experiment) <- "RNA"
 
@@ -315,15 +345,16 @@ p1
 p2
 p3
 
+head(experiment[[]])
 ###Umap-wnn by mouse
-plot_mouse <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident")
+plot_mouse <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident") + ggtitle("Coloured by mouse")
 plot_mouse
 
 ###Umap-wnn by sample
 DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, split.by = "orig.ident", ncol = 2) + NoLegend()
 
 ###Umap-wnn by cell cycle stage
-DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase")
+DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase") + ggtitle("Coloured by cell cycle stage")
 
 head(experiment[[]])
 ###Match the RNA Names to the Antibodies, this should be checked
@@ -336,13 +367,13 @@ DefaultAssay(experiment) <- "RNA"
 DefaultAssay(experiment) <- "ADT"
 FeaturePlot(experiment, features = c("CD19", "CD4", "CD8A", "PRDM1", "PPBP", "NKG7", "CST3", "FOXP3", "B220"), reduction = "wnn.umap")
 
-RidgePlot(experiment, features = c("CD19", "CYP11A1"), ncol = 2)
+RidgePlot(experiment, features = c("CD19", "CD4"), ncol = 2)
 
 FeaturePlot(experiment, features = c("IGHV1-53", "IGKV3-4", "IGHD1-1"), reduction = "wnn.umap")
 FeaturePlot(experiment, feature = "IGHG", reduction = "wnn.umap")
 
-FeaturePlot(experiment, features = c("LY6A"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "RUNX1")
+FeaturePlot(experiment, features = c("CD19"), reduction = "wnn.umap")
+VlnPlot(experiment, feature = "CYP11A1")
 ?VlnPlot
 p3
 
@@ -356,11 +387,13 @@ experiment.markers %>%
 DoHeatmap(experiment, features = top10$gene) + NoLegend()
 
 ##DE genes of individual clusters
-Cluster_3 <- FindMarkers(experiment, ident.1 = 3, assay = "RNA")
-Cluster_3_adt <- FindMarkers(experiment, ident.1 = 3, assay = "ADT")
+Cluster_19 <- FindMarkers(experiment, ident.1 = 19, assay = "RNA")
+Cluster_19_adt <- FindMarkers(experiment, ident.1 = 19, assay = "ADT")
 
 Cluster_4 <- FindMarkers(experiment, ident.1 = 4, assay = "RNA")
 Cluster_4_adt <- FindMarkers(experiment, ident.1 = 4, assay = "ADT")
+
+p3
 
 ##Subsetting unknown cluster
 Unknown_cells <- subset(experiment, idents = c(2, 12, 27, 33))
@@ -376,7 +409,10 @@ FeaturePlot(Unknown_cells, "KLS", reduction = "unknown.umap")
 quantContig(combined, cloneCall = "gene+nt", scale = T) #percent of unique clonotypes of total size of the size of clonotyeps
 quantContig(combined, cloneCall = "gene+nt", scale = F) #number of uniqe clonotypes
 
-quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGL")#by chain
+quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGH") + ggtitle("IGH")#by IGH
+quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGH") + ggtitle("IGH")#by IGH
+quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGL") + ggtitle("IGL")#by IGL
+quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGL") + ggtitle("IGL")#by IGL
 
 #Abundance of clonotypes
 Abundance_clonotypes <- abundanceContig(combined, cloneCall = "gene", scale = F, exportTable = T)
@@ -391,10 +427,10 @@ lengthContig(combined, cloneCall = "aa")
 lengthContig(combined, cloneCall = "nt")
 
 #Compare clonotypes
-compareClonotypes(combined, samples = c("a", "b"), cloneCall = "aa", graph = "alluvial") #Computationally intese
+compareClonotypes(combined, samples = c("a", "b"), cloneCall = "aa", graph = "alluvial") #Computationally intense
 
 #Visualise Gene Usage
-vizGenes(combined, gene = "D", chain = "IGH", plot = "bar", order = "variance", scale = TRUE)
+vizGenes(combined, gene = "V", chain = "IGH", plot = "bar", order = "variance", scale = TRUE)
 vizGenes(combined, gene = "V", chain = "IGL", plot = "bar", order = "variance", scale = TRUE)
 
 vizGenes(combined, gene = "V", chain = "IGL", plot = "heatmap", scale = TRUE, order = "gene")
@@ -410,5 +446,46 @@ clonalProportion(combined, cloneCall = "nt")
 #Clonal Homeostasis
 clonalHomeostasis(combined, cloneCall = "gene")
 clonalHomeostasis(combined, cloneCall = "nt")
+
+####Add module score####
+Hallmark_sig <- read.csv("Population_signatures/Hallmark_signatures.csv",header = T, sep = ',')
+
+##Load individual signature lists
+Apoptosis_list <- list(Hallmark_sig$Apoptosis)
+PI3Ksig_list <- list(Hallmark_sig$PI3K_AKT_MTOR_Signalling)
+Cholesterol_list <- list(Hallmark_sig$Cholesterol_Homeostasis)
+IL2sig_list <- list(Hallmark_sig$IL2_STAT5_Signalling)
+
+
+##convertMouseGeneList - function
+convertHumanGeneList <- function(x){
+  require("biomaRt")
+  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = x , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+  mousex <- unique(genesV2[, 2])
+  # Print the first 6 genes found to the screen
+  print(head(mousex))
+  return(mousex)
+}
+
+##Convert human to mouse genes
+Apoptosis_list <- convertHumanGeneList(Apoptosis_list)
+lapply(Apoptosis_list, toupper)
+str(Apoptosis_list)
+
+##Set correct assay
+DefaultAssay(experiment) <- "RNA"
+
+##Addnodulescore
+experiment <-AddModuleScore(experiment, features = Apoptosis_list, name = "Apoptosis_enrichment")
+experiment <-AddModuleScore(experiment, features = PI3Ksig_list, name = "PI3Ksig_enrichment")
+experiment <-AddModuleScore(experiment, features = Cholesterol_list, name = "Cholesterol_enrichment")
+experiment <-AddModuleScore(experiment, features = IL2sig_list, name = "IL2sig_enrichment")
+
+
+##Visualise enrichment scores
+VlnPlot(experiment, c("IL2sig_enrichment1"), pt.size  = 0.1)+NoLegend()
+FeaturePlot(experiment, c("PI3Ksig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
 
 
