@@ -455,6 +455,7 @@ Apoptosis_list <- list(Hallmark_sig$Apoptosis)
 PI3Ksig_list <- list(Hallmark_sig$PI3K_AKT_MTOR_Signalling)
 Cholesterol_list <- list(Hallmark_sig$Cholesterol_Homeostasis)
 IL2sig_list <- list(Hallmark_sig$IL2_STAT5_Signalling)
+IL6sig_list <- list(Hallmark_sig$IL6_JAK_STAT3_Signalling)
 
 
 ##convertMouseGeneList - function
@@ -482,10 +483,11 @@ experiment <-AddModuleScore(experiment, features = Apoptosis_list, name = "Apopt
 experiment <-AddModuleScore(experiment, features = PI3Ksig_list, name = "PI3Ksig_enrichment")
 experiment <-AddModuleScore(experiment, features = Cholesterol_list, name = "Cholesterol_enrichment")
 experiment <-AddModuleScore(experiment, features = IL2sig_list, name = "IL2sig_enrichment")
-
+experiment <-AddModuleScore(experiment, features = IL6sig_list, name = "IL6sig_enrichment")
 
 ##Visualise enrichment scores
-VlnPlot(experiment, c("IL2sig_enrichment1"), pt.size  = 0.1)+NoLegend()
+VlnPlot(experiment, c("IL6sig_enrichment1"), pt.size  = 0.1)+NoLegend()
 FeaturePlot(experiment, c("PI3Ksig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
 
+p3
 
