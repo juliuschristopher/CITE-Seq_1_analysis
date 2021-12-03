@@ -288,17 +288,17 @@ pca_variance <- experiment@reductions$pca@stdev^2
 plot(pca_variance/sum(pca_variance), 
      ylab="Proportion of variance explained", 
      xlab="Principal component")
-abline(h = 0.01) #23
+abline(h = 0.01) #25
 
 #Cluster the cells
-experiment <- FindNeighbors(experiment, dims = 1:23)
+experiment <- FindNeighbors(experiment, dims = 1:25)
 experiment <- FindClusters(experiment, resolution = 1.3, verbose = FALSE) #1.3 or 1.2 for the resolution
 
 #Cluster Tree Analysis
 clustree(experiment, prefix = "SCT_snn_res.") + theme(legend.position="bottom")
 
 #RNA UMAP
-experiment <- RunUMAP(experiment, dims = 1:23)
+experiment <- RunUMAP(experiment, dims = 1:25)
 DimPlot(experiment, label = TRUE, cols=colbig) +  ggtitle("RNA Clustering")
 
 ####Scale antibody data####
@@ -324,14 +324,14 @@ apca_variance <- experiment@reductions$apca@stdev^2
 plot(apca_variance/sum(apca_variance), 
      ylab="Proportion of variance explained", 
      xlab="Principal component")
-abline(h = 0.01) #24
+abline(h = 0.01) #25
 
 #Number of clusters for UMAP?
 
 ####Combine into wnn plot####
 experiment <- FindMultiModalNeighbors(
   experiment, reduction.list = list("pca", "apca"), 
-  dims.list = list(1:23, 1:24), modality.weight.name = "RNA.weight")
+  dims.list = list(1:25, 1:25), modality.weight.name = "RNA.weight")
 
 #UMAP plots for RNA, ADT and WNN
 experiment <- RunUMAP(experiment, reduction = 'pca', dims = 1:23, assay = 'RNA', 
@@ -339,7 +339,7 @@ experiment <- RunUMAP(experiment, reduction = 'pca', dims = 1:23, assay = 'RNA',
 experiment<- RunUMAP(experiment, reduction = 'apca', dims = 1:24, assay = 'ADT', 
                      reduction.name = 'adt.umap', reduction.key = 'adtUMAP_')
 experiment <- RunUMAP(experiment, nn.name = "weighted.nn", reduction.name = "wnn.umap", reduction.key = "wnnUMAP_")
-experiment <- FindClusters(experiment, graph.name = "wsnn", algorithm = 3, resolution = 1.7, verbose = TRUE)
+experiment <- FindClusters(experiment, graph.name = "wsnn", algorithm = 3, resolution = 1.0, verbose = TRUE)
 
 #Cluster Tree Analysis of wsnn graph
 clustree(experiment, prefix = "wsnn_res.") + theme(legend.position="bottom")#1.7
