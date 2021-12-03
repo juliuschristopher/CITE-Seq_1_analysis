@@ -1,4 +1,4 @@
-## ##CITE-Seq 1 Script####
+## ##CITE-Seq 1 Script - Seurat object generation####
 ####Setup####
 #Load required packages
 library(Seurat)
@@ -16,6 +16,8 @@ library(alakazam)
 library(immunarch)
 library(airr)
 library(biomaRt)
+library(SeuratDisk)
+library(SeuratData)
 
 #Alter working capacity
 plan()
@@ -354,208 +356,12 @@ p1
 p2
 p3
 
+experiment
 head(experiment[[]])
-###Umap-wnn by mouse
-plot_mouse <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident") + ggtitle("Coloured by mouse")
-plot_mouse
+SaveH5Seurat(experiment, overwrite = TURE)
 
-plot_mouse_2 <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, split.by ="orig.ident") + ggtitle("Coloured by mouse")
-
-###Umap-wnn by sample
-DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, split.by = "orig.ident", ncol = 2) + NoLegend()
-
-###Umap-wnn by cell cycle stage
-DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase") + ggtitle("Coloured by cell cycle stage")
-
-head(experiment[[]])
+DefaultAssay(experiment) <- "RNA"
+DefaultAssay(experiment) <- "ADT"
 ###Match the RNA Names to the Antibodies, this should be checked
 list1=c(rownames(a_ab.data))
 list2=c("PTPRC","FAS","CD19","IGHM","CR2","FCER2A","CD93","CD83","CD86","IGHD","CD8A","SELL","CD44","CD4","CXCR5","PDCD1","IL2RA","CD274","PDCD1LG2","CTLA4","CD80","CD40","CD69","ICOS","CD38","TNFRSF18")
-
-####Analysis of clusters####
-##Different plotting options
-DefaultAssay(experiment) <- "RNA"
-DefaultAssay(experiment) <- "ADT"
-FeaturePlot(experiment, features = c("CD19", "CD4", "CD8A", "PRDM1", "PPBP", "NKG7", "CST3", "FOXP3", "B220"), reduction = "wnn.umap")
-
-RidgePlot(experiment, features = c("CD19", "CD4"), ncol = 2)
-
-FeaturePlot(experiment, features = c("IGHV1-53", "IGKV3-4", "IGHD1-1"), reduction = "wnn.umap")
-FeaturePlot(experiment, feature = "IGHG", reduction = "wnn.umap")
-
-FeaturePlot(experiment, features = c("IgM"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "IgM")
-?VlnPlot
-p3
-
-Idents(object = experiment) <- "old.ident"
-head(experiment[[]])
-##Finding all the markers
-experiment.markers <- FindAllMarkers(experiment, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
-experiment.markers %>%
-  group_by(cluster) %>%
-  top_n(n = 10, wt = avg_log2FC) -> top10
-DoHeatmap(experiment, features = top10$gene) + NoLegend()
-
-##DE genes of individual clusters
-Cluster_2 <- FindMarkers(experiment, ident.1 = 2, assay = "RNA")
-Cluster_2_adt <- FindMarkers(experiment, ident.1 = 2, assay = "ADT")
-
-Cluster_12 <- FindMarkers(experiment, ident.1 = 12, assay = "RNA")
-Cluster_12_adt <- FindMarkers(experiment, ident.1 = 12, assay = "ADT")
-
-Cluster_19 <- FindMarkers(experiment, ident.1 = 19, assay = "RNA")
-Cluster_19_adt <- FindMarkers(experiment, ident.1 = 19, assay = "ADT")
-
-Cluster_4 <- FindMarkers(experiment, ident.1 = 4, assay = "RNA")
-Cluster_4_adt <- FindMarkers(experiment, ident.1 = 4, assay = "ADT")
-
-##Export Cluster-associated gene lists
-Cluster_2_exp <- tibble::rownames_to_column(Cluster_2, "Genes")
-write_xlsx(Cluster_2_exp, "\\Cluster_2_exp.xlsx")
-
-Cluster_12_exp <- tibble::rownames_to_column(Cluster_12, "Genes")
-write_xlsx(Cluster_12_exp, "\\Cluster_12_exp.xlsx")
-
-p3
-##Subsetting unknown cluster
-Unknown_cells <- subset(experiment, idents = c(2, 12, 27, 33))
-Unknown_cells <- FindClusters(Unknown_cells, resolution = 0.8, verbose = FALSE, graph.name = "wsnn")
-Unknown_cells <- RunUMAP(Unknown_cells, dims = 1:30, reduction.name = "unknown.umap")
-DimPlot(Unknown_cells, label = TRUE, cols=colbig, reduction = "unknown.umap", label.size = 2.5) + NoLegend()
-FeaturePlot(Unknown_cells, "KLS", reduction = "unknown.umap")
-
-
-####Clonotype analysis####
-##Data visualization
-#Percent/total number of unique clonotypes 
-quantContig(combined, cloneCall = "gene+nt", scale = T) #percent of unique clonotypes of total size of the size of clonotyeps
-quantContig(combined, cloneCall = "gene+nt", scale = F) #number of uniqe clonotypes
-
-quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGH") + ggtitle("IGH")#by IGH
-quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGH") + ggtitle("IGH")#by IGH
-quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGL") + ggtitle("IGL")#by IGL
-quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGL") + ggtitle("IGL")#by IGL
-
-#Abundance of clonotypes
-Abundance_clonotypes <- abundanceContig(combined, cloneCall = "gene", scale = F, exportTable = T)
-Abundance_clonotypes <- Abundance_clonotypes %>%
-  arrange(desc(Abundance))
-Abundance_clonotypes
-
-abundanceContig(combined, cloneCall = "gene", scale = T)
-
-#Length of clonotypes
-lengthContig(combined, cloneCall = "aa")
-lengthContig(combined, cloneCall = "nt")
-
-#Compare clonotypes
-compareClonotypes(combined, samples = c("a", "b"), cloneCall = "aa", graph = "alluvial") #Computationally intense
-
-#Visualise Gene Usage
-vizGenes(combined, gene = "V", chain = "IGH", plot = "bar", order = "variance", scale = TRUE)
-vizGenes(combined, gene = "V", chain = "IGL", plot = "bar", order = "variance", scale = TRUE)
-
-vizGenes(combined, gene = "V", chain = "IGL", plot = "heatmap", scale = TRUE, order = "gene")
-
-#Clonal overlap
-clonalOverlap(combined, cloneCall = "gene+nt", 
-              method = "morisita")
-
-#Clonotype proportion
-clonalProportion(combined, cloneCall = "gene")
-clonalProportion(combined, cloneCall = "nt")
-
-#Clonal Homeostasis
-clonalHomeostasis(combined, cloneCall = "gene")
-clonalHomeostasis(combined, cloneCall = "nt")
-
-####Add module score####
-Hallmark_sig <- read.csv("Population_signatures/Hallmark_signatures.csv",header = T, sep = ',')
-
-##Load individual signature lists
-Apoptosis_list <- list(Hallmark_sig$Apoptosis)
-PI3Ksig_list <- list(Hallmark_sig$PI3K_AKT_MTOR_Signalling)
-Cholesterol_list <- list(Hallmark_sig$Cholesterol_Homeostasis)
-IL2sig_list <- list(Hallmark_sig$IL2_STAT5_Signalling)
-IL6sig_list <- list(Hallmark_sig$IL6_JAK_STAT3_Signalling)
-
-
-##convertMouseGeneList - function
-convertHumanGeneList <- function(x){
-  require("biomaRt")
-  human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
-  mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
-  genesV2 = getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = x , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
-  mousex <- unique(genesV2[, 2])
-  # Print the first 6 genes found to the screen
-  print(head(mousex))
-  return(mousex)
-}
-
-##Convert human to mouse genes
-Apoptosis_list <- convertHumanGeneList(Apoptosis_list)
-lapply(Apoptosis_list, toupper)
-str(Apoptosis_list)
-
-##Set correct assay
-DefaultAssay(experiment) <- "RNA"
-
-##Addnodulescore
-experiment <-AddModuleScore(experiment, features = Apoptosis_list, name = "Apoptosis_enrichment")
-experiment <-AddModuleScore(experiment, features = PI3Ksig_list, name = "PI3Ksig_enrichment")
-experiment <-AddModuleScore(experiment, features = Cholesterol_list, name = "Cholesterol_enrichment")
-experiment <-AddModuleScore(experiment, features = IL2sig_list, name = "IL2sig_enrichment")
-experiment <-AddModuleScore(experiment, features = IL6sig_list, name = "IL6sig_enrichment")
-
-##Visualise enrichment scores
-VlnPlot(experiment, c("IL6sig_enrichment1"), pt.size  = 0.1)+NoLegend()
-FeaturePlot(experiment, c("PI3Ksig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
-
-p3
-
-
-####TFIDF####
-###Define the function
-tfidf = function(data,target,universe){
-  if(!all(target %in% universe))
-    stop('Target must be a subset of universe')
-  nObs = Matrix::rowSums(data[,target,drop=FALSE]>0)
-  nTot = Matrix::rowSums(data[,universe,drop=FALSE]>0)
-  tf = nObs/length(target)
-  idf = log(length(universe)/nTot)
-  score = tf*idf
-  #Calculate p-value for significance based on using a hypergeometric distribution to simulate the results of infinite random sampling
-  pvals = phyper(nObs-1,nTot,length(universe)-nTot,length(target),lower.tail=FALSE)
-  qvals = p.adjust(pvals,method='BH')
-  ntf = (exp(-idf)*length(universe)-tf*length(target))/(length(universe)-length(target))
-  return(data.frame(geneFrequency=tf,
-                    geneFrequencyOutsideCluster=ntf,
-                    geneFrequencyGlobal=exp(-idf),
-                    geneExpression=Matrix::rowMeans(data[,target,drop=FALSE]),
-                    geneExpressionOutsideCluster = Matrix::rowMeans(data[,universe[!(universe%in%target)],drop=FALSE]),
-                    geneExpressionGlobal = Matrix::rowMeans(data),
-                    idf=idf,
-                    tfidf=score,
-                    qval=qvals)[order(score,decreasing=TRUE),])
-}
-
-##Select cluster
-TFIDF.c2 <- WhichCells(object = experiment, ident = 2)
-TFIDF.c12 <- WhichCells(object = experiment, ident = 12)
-
-
-##Set to RNA assay
-DefaultAssay(experiment)<-"RNA"
-
-##Run function - Higher TFIDF score and lower q value genes are more uniquely expressed
-TFIDF.c2.genes <- tfidf(GetAssayData(experiment), TFIDF.c2, colnames(experiment))
-TFIDF.c12.genes <- tfidf(GetAssayData(experiment), TFIDF.c12, colnames(experiment))
-
-
-##Export table
-TFIDF_cluster_2 <- tibble::rownames_to_column(TFIDF.c2.genes, "Genes")
-write_xlsx(TFIDF_cluster_2, "\\TFIDF_cluster_2.xlsx")
-
-TFIDF_cluster_12 <- tibble::rownames_to_column(TFIDF.c12.genes, "Genes")
-write_xlsx(TFIDF_cluster_12, "\\TFIDF_cluster_12.xlsx")
