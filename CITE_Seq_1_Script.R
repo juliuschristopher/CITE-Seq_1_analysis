@@ -54,8 +54,8 @@ rownames(d2_ge.data)=toupper(rownames(d2_ge.data))
 rownames(a_ge.data)=toupper(rownames(a_ge.data))
 rownames(b_ge.data)=toupper(rownames(b_ge.data))
 rownames(f_ge.data)=toupper(rownames(f_ge.data))
-
 head(f_ge.data)
+
 ####Load 10X Antibody data####
 #Read the 10x Antibody output
 c1_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/C1_SP_out_2/umi_count",gene.column=1)
@@ -75,7 +75,6 @@ rownames(a_ab.data)=gsub("-[^-]+$","",rownames(a_ab.data),perl=TRUE)
 rownames(b_ab.data)=gsub("-[^-]+$","",rownames(b_ab.data),perl=TRUE)
 rownames(f_ab.data)=gsub("-[^-]+$","",rownames(f_ab.data),perl=TRUE)
 
-
 #Add the Sample to the cell names in each sample
 colnames(c1_ab.data)=paste(colnames(c1_ab.data),"_c1",sep="")
 colnames(c2_ab.data)=paste(colnames(c2_ab.data),"_c2",sep="")
@@ -84,9 +83,8 @@ colnames(d2_ab.data)=paste(colnames(d2_ab.data),"_d2",sep="")
 colnames(a_ab.data)=paste(colnames(a_ab.data),"_a",sep="")
 colnames(b_ab.data)=paste(colnames(b_ab.data),"_b",sep="")
 colnames(f_ab.data)=paste(colnames(f_ab.data),"_f",sep="")
-
-
 head(f_ab.data)
+
 ####Combine 10X Cell Ranger and Antibody Data into a Suerat Object####
 
 m <- Matrix(nrow = nrow(c1_ab.data), ncol = ncol(c1_ge.data), data = 0, sparse = TRUE)
@@ -151,7 +149,6 @@ m[,common]=f_ab.data[,common]
 f = CreateSeuratObject(counts = f_ge.data,project="f", min.cells = 3)
 adt_assay <- CreateAssayObject(counts = m)
 f[["ADT"]] <- adt_assay
-
 head(f[[]])
 
 ####Incoperate VDJ data####
@@ -163,7 +160,6 @@ d2_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/D2_V
 a_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/A_WT_VDJ/outs/filtered_contig_annotations.csv")
 b_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/B_WT_VDJ/outs/filtered_contig_annotations.csv")
 f_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/F_E1020K_VDJ/outs/filtered_contig_annotations.csv")
-
 
 #match barcode names with GE and ADT data
 c1_cl.data$barcode=gsub("-1","_c1",c1_cl.data$barcode)
@@ -179,10 +175,10 @@ head(contig_list[[1]])
 
 #Generate combined object
 combined <- combineBCR(contig_list, samples = c("c1", "c2", "d1", "d2", "a", "b", "f"))
-combined[[1]]
+combined[[7]]
 
 str(combined)
-head(combined[[1]])
+head(combined[[7]])
 
 #Make sure barcodes are identical to GE and ADT data
 combined$c1$barcode=gsub("c1_","",combined$c1$barcode)
@@ -191,28 +187,22 @@ combined$d1$barcode=gsub("d1_","",combined$d1$barcode)
 combined$d2$barcode=gsub("d2_","",combined$d2$barcode)
 combined$a$barcode=gsub("a_","",combined$a$barcode)
 combined$b$barcode=gsub("b_","",combined$b$barcode)
-combined$b$barcode=gsub("f_","",combined$b$barcode)
-
-
+combined$f$barcode=gsub("f_","",combined$f$barcode)
 head(combined$f)
+
 #####Process samples as one####
 experiments=c(c1,c2,d1,d2,a,b,f)
-experiment_names=c("c1","c2","d1","d2","a","b", "f")
+experiment_names=c("c1","c2","d1","d2","a","b","f")
 
 experiment<-merge(x= c1, y=c(c2,d1,d2,a,b,f))
-
-experiment
-str(experiment)
 head(experiment[[]])
 
 ####Merge Seurat object with VDJ data####
-experiment <- combineExpression(combined,
-                                experiment,
-                                cloneCall="gene", group.by = "sample")
+experiment <- combineExpression(combined, experiment, cloneCall="gene", group.by =  "sample")
 
 head(experiment[[]])
 
-####Quality control, filtering, normalisation and scaling####
+####Quality control, filtering and normalisation####
 #Mitochondrial QC metrics
 experiment[["percent.mt"]] <- PercentageFeatureSet(experiment, pattern = "^MT-")
 
@@ -223,11 +213,13 @@ DefaultAssay(experiment) <- "RNA"
 
 #Visualize QC metrics as violin plot
 RNA_QC <- VlnPlot(experiment, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"))
-ADT_QC <- VlnPlot(experiment, features = "nFeature_ADT")
-ADT_QC <- VlnPlot(experiment, features = "nCount_ADT", y.max = 10000)
+ADT_QC_1 <- VlnPlot(experiment, features = "nFeature_ADT")
+ADT_QC_2 <- VlnPlot(experiment, features = "nCount_ADT", y.max = 10000)
 
 RNA_QC
-ADT_QC
+ADT_QC_1
+ADT_QC_2
+
 #FeatureScatter is typically used to visualize feature-feature relationships, but can be used for anything calculated by the object, i.e. columns in object metadata, PC scores etc.
 feature_count.RNA_vs_percent.mt = FeatureScatter(experiment, feature1 = "nCount_RNA", feature2 = "percent.mt") + NoLegend()  +
   ylab("% of mitochondrial genes") +
