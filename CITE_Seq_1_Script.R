@@ -35,7 +35,7 @@ d1_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_file
 d2_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Sample_GE_out/D2_GE/outs/filtered_feature_bc_matrix")
 a_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/A_WT_GE/outs/filtered_feature_bc_matrix")
 b_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/B_WT_GE/outs/filtered_feature_bc_matrix")
-
+f_ge.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/GE/F_E1020K_GE/outs/filtered_feature_bc_matrix")
 
 #Add the sample to the cell names, consistent with antibody data below
 colnames(c1_ge.data)=gsub("-1","_c1",colnames(c1_ge.data))
@@ -44,7 +44,7 @@ colnames(d1_ge.data)=gsub("-1","_d1",colnames(d1_ge.data))
 colnames(d2_ge.data)=gsub("-1","_d2",colnames(d2_ge.data))
 colnames(a_ge.data)=gsub("-1","_a",colnames(a_ge.data))
 colnames(b_ge.data)=gsub("-1","_b",colnames(b_ge.data))
-
+colnames(f_ge.data)=gsub("-1","_f",colnames(f_ge.data))
 
 #Uppercase the gene names for easier matching later
 rownames(c1_ge.data)=toupper(rownames(c1_ge.data))
@@ -53,9 +53,9 @@ rownames(d1_ge.data)=toupper(rownames(d1_ge.data))
 rownames(d2_ge.data)=toupper(rownames(d2_ge.data))
 rownames(a_ge.data)=toupper(rownames(a_ge.data))
 rownames(b_ge.data)=toupper(rownames(b_ge.data))
+rownames(f_ge.data)=toupper(rownames(f_ge.data))
 
-
-head(b_ge.data)
+head(f_ge.data)
 ####Load 10X Antibody data####
 #Read the 10x Antibody output
 c1_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/C1_SP_out_2/umi_count",gene.column=1)
@@ -64,7 +64,7 @@ d1_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_file
 d2_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/Antibody_fraction/D2_SP_out_2/umi_count",gene.column=1)
 a_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/A_WT/umi_count",gene.column=1)
 b_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/B_WT/umi_count",gene.column=1)
-
+f_ab.data <- Read10X(data.dir = "~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/second_batch_data_CP/F_E1020K/umi_count",gene.column=1)
 
 #Tidy up the rownames from the data
 rownames(c1_ab.data)=gsub("-[^-]+$","",rownames(c1_ab.data),perl=TRUE)
@@ -73,6 +73,8 @@ rownames(d1_ab.data)=gsub("-[^-]+$","",rownames(d1_ab.data),perl=TRUE)
 rownames(d2_ab.data)=gsub("-[^-]+$","",rownames(d2_ab.data),perl=TRUE)
 rownames(a_ab.data)=gsub("-[^-]+$","",rownames(a_ab.data),perl=TRUE)
 rownames(b_ab.data)=gsub("-[^-]+$","",rownames(b_ab.data),perl=TRUE)
+rownames(f_ab.data)=gsub("-[^-]+$","",rownames(f_ab.data),perl=TRUE)
+
 
 #Add the Sample to the cell names in each sample
 colnames(c1_ab.data)=paste(colnames(c1_ab.data),"_c1",sep="")
@@ -81,8 +83,10 @@ colnames(d1_ab.data)=paste(colnames(d1_ab.data),"_d1",sep="")
 colnames(d2_ab.data)=paste(colnames(d2_ab.data),"_d2",sep="")
 colnames(a_ab.data)=paste(colnames(a_ab.data),"_a",sep="")
 colnames(b_ab.data)=paste(colnames(b_ab.data),"_b",sep="")
+colnames(f_ab.data)=paste(colnames(f_ab.data),"_f",sep="")
 
-head(b_ab.data)
+
+head(f_ab.data)
 ####Combine 10X Cell Ranger and Antibody Data into a Suerat Object####
 
 m <- Matrix(nrow = nrow(c1_ab.data), ncol = ncol(c1_ge.data), data = 0, sparse = TRUE)
@@ -139,8 +143,16 @@ b = CreateSeuratObject(counts = b_ge.data,project="b", min.cells = 3)
 adt_assay <- CreateAssayObject(counts = m)
 b[["ADT"]] <- adt_assay
 
+m <- Matrix(nrow = nrow(f_ab.data), ncol = ncol(f_ge.data), data = 0, sparse = TRUE)
+rownames(m)=rownames(f_ab.data)
+colnames(m)=colnames(f_ge.data)
+common=intersect(colnames(f_ge.data),colnames(f_ab.data))
+m[,common]=f_ab.data[,common]
+f = CreateSeuratObject(counts = f_ge.data,project="f", min.cells = 3)
+adt_assay <- CreateAssayObject(counts = m)
+f[["ADT"]] <- adt_assay
 
-head(b[[]])
+head(f[[]])
 
 ####Incoperate VDJ data####
 #Load contig file
@@ -150,6 +162,8 @@ d1_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/D1_V
 d2_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_1_files/VDJ/D2_VDJ/outs/filtered_contig_annotations.csv")
 a_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/A_WT_VDJ/outs/filtered_contig_annotations.csv")
 b_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/B_WT_VDJ/outs/filtered_contig_annotations.csv")
+f_cl.data <- read.csv("~/Desktop/CITE-Sequencing_Data/CITE_Seq_2_files/VDJ_batch2/F_E1020K_VDJ/outs/filtered_contig_annotations.csv")
+
 
 #match barcode names with GE and ADT data
 c1_cl.data$barcode=gsub("-1","_c1",c1_cl.data$barcode)
@@ -158,12 +172,13 @@ d1_cl.data$barcode=gsub("-1","_d1",d1_cl.data$barcode)
 d2_cl.data$barcode=gsub("-1","_d2",d2_cl.data$barcode)
 a_cl.data$barcode=gsub("-1","_a",a_cl.data$barcode)
 b_cl.data$barcode=gsub("-1","_b",b_cl.data$barcode)
+f_cl.data$barcode=gsub("-1","_f",f_cl.data$barcode)
 
-contig_list <- list(c1_cl.data, c2_cl.data, d1_cl.data, d2_cl.data, a_cl.data, b_cl.data)
+contig_list <- list(c1_cl.data, c2_cl.data, d1_cl.data, d2_cl.data, a_cl.data, b_cl.data, f_cl.data)
 head(contig_list[[1]])
 
 #Generate combined object
-combined <- combineBCR(contig_list, samples = c("c1", "c2", "d1", "d2", "a", "b"))
+combined <- combineBCR(contig_list, samples = c("c1", "c2", "d1", "d2", "a", "b", "f"))
 combined[[1]]
 
 str(combined)
@@ -176,19 +191,21 @@ combined$d1$barcode=gsub("d1_","",combined$d1$barcode)
 combined$d2$barcode=gsub("d2_","",combined$d2$barcode)
 combined$a$barcode=gsub("a_","",combined$a$barcode)
 combined$b$barcode=gsub("b_","",combined$b$barcode)
+combined$b$barcode=gsub("f_","",combined$b$barcode)
 
-head(combined$c1)
+
+head(combined$f)
 #####Process samples as one####
-experiments=c(c1,c2,d1,d2,a,b)
-experiment_names=c("c1","c2","d1","d2","a","b")
+experiments=c(c1,c2,d1,d2,a,b,f)
+experiment_names=c("c1","c2","d1","d2","a","b", "f")
 
-experiment<-merge(x= c1, y=c(c2,d1,d2,a,b))
+experiment<-merge(x= c1, y=c(c2,d1,d2,a,b,f))
 
 experiment
 str(experiment)
 head(experiment[[]])
 
-####Merge seurat object with VDJ data####
+####Merge Seurat object with VDJ data####
 experiment <- combineExpression(combined,
                                 experiment,
                                 cloneCall="gene", group.by = "sample")
@@ -350,6 +367,8 @@ head(experiment[[]])
 plot_mouse <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident") + ggtitle("Coloured by mouse")
 plot_mouse
 
+plot_mouse_2 <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, split.by ="orig.ident") + ggtitle("Coloured by mouse")
+
 ###Umap-wnn by sample
 DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, split.by = "orig.ident", ncol = 2) + NoLegend()
 
@@ -372,8 +391,8 @@ RidgePlot(experiment, features = c("CD19", "CD4"), ncol = 2)
 FeaturePlot(experiment, features = c("IGHV1-53", "IGKV3-4", "IGHD1-1"), reduction = "wnn.umap")
 FeaturePlot(experiment, feature = "IGHG", reduction = "wnn.umap")
 
-FeaturePlot(experiment, features = c("CD19"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "CYP11A1")
+FeaturePlot(experiment, features = c("IgM"), reduction = "wnn.umap")
+VlnPlot(experiment, feature = "IgM")
 ?VlnPlot
 p3
 
@@ -387,14 +406,26 @@ experiment.markers %>%
 DoHeatmap(experiment, features = top10$gene) + NoLegend()
 
 ##DE genes of individual clusters
+Cluster_2 <- FindMarkers(experiment, ident.1 = 2, assay = "RNA")
+Cluster_2_adt <- FindMarkers(experiment, ident.1 = 2, assay = "ADT")
+
+Cluster_12 <- FindMarkers(experiment, ident.1 = 12, assay = "RNA")
+Cluster_12_adt <- FindMarkers(experiment, ident.1 = 12, assay = "ADT")
+
 Cluster_19 <- FindMarkers(experiment, ident.1 = 19, assay = "RNA")
 Cluster_19_adt <- FindMarkers(experiment, ident.1 = 19, assay = "ADT")
 
 Cluster_4 <- FindMarkers(experiment, ident.1 = 4, assay = "RNA")
 Cluster_4_adt <- FindMarkers(experiment, ident.1 = 4, assay = "ADT")
 
-p3
+##Export Cluster-associated gene lists
+Cluster_2_exp <- tibble::rownames_to_column(Cluster_2, "Genes")
+write_xlsx(Cluster_2_exp, "\\Cluster_2_exp.xlsx")
 
+Cluster_12_exp <- tibble::rownames_to_column(Cluster_12, "Genes")
+write_xlsx(Cluster_12_exp, "\\Cluster_12_exp.xlsx")
+
+p3
 ##Subsetting unknown cluster
 Unknown_cells <- subset(experiment, idents = c(2, 12, 27, 33))
 Unknown_cells <- FindClusters(Unknown_cells, resolution = 0.8, verbose = FALSE, graph.name = "wsnn")
@@ -491,3 +522,48 @@ FeaturePlot(experiment, c("PI3Ksig_enrichment1"),cols=c("Blue", "Yellow"), reduc
 
 p3
 
+
+####TFIDF####
+###Define the function
+tfidf = function(data,target,universe){
+  if(!all(target %in% universe))
+    stop('Target must be a subset of universe')
+  nObs = Matrix::rowSums(data[,target,drop=FALSE]>0)
+  nTot = Matrix::rowSums(data[,universe,drop=FALSE]>0)
+  tf = nObs/length(target)
+  idf = log(length(universe)/nTot)
+  score = tf*idf
+  #Calculate p-value for significance based on using a hypergeometric distribution to simulate the results of infinite random sampling
+  pvals = phyper(nObs-1,nTot,length(universe)-nTot,length(target),lower.tail=FALSE)
+  qvals = p.adjust(pvals,method='BH')
+  ntf = (exp(-idf)*length(universe)-tf*length(target))/(length(universe)-length(target))
+  return(data.frame(geneFrequency=tf,
+                    geneFrequencyOutsideCluster=ntf,
+                    geneFrequencyGlobal=exp(-idf),
+                    geneExpression=Matrix::rowMeans(data[,target,drop=FALSE]),
+                    geneExpressionOutsideCluster = Matrix::rowMeans(data[,universe[!(universe%in%target)],drop=FALSE]),
+                    geneExpressionGlobal = Matrix::rowMeans(data),
+                    idf=idf,
+                    tfidf=score,
+                    qval=qvals)[order(score,decreasing=TRUE),])
+}
+
+##Select cluster
+TFIDF.c2 <- WhichCells(object = experiment, ident = 2)
+TFIDF.c12 <- WhichCells(object = experiment, ident = 12)
+
+
+##Set to RNA assay
+DefaultAssay(experiment)<-"RNA"
+
+##Run function - Higher TFIDF score and lower q value genes are more uniquely expressed
+TFIDF.c2.genes <- tfidf(GetAssayData(experiment), TFIDF.c2, colnames(experiment))
+TFIDF.c12.genes <- tfidf(GetAssayData(experiment), TFIDF.c12, colnames(experiment))
+
+
+##Export table
+TFIDF_cluster_2 <- tibble::rownames_to_column(TFIDF.c2.genes, "Genes")
+write_xlsx(TFIDF_cluster_2, "\\TFIDF_cluster_2.xlsx")
+
+TFIDF_cluster_12 <- tibble::rownames_to_column(TFIDF.c12.genes, "Genes")
+write_xlsx(TFIDF_cluster_12, "\\TFIDF_cluster_12.xlsx")
