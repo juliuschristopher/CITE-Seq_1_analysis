@@ -50,6 +50,8 @@ DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group
 FeaturePlot(experiment, features = c("CXCR5"), reduction = "wnn.umap")
 VlnPlot(experiment, feature = "IgM")
 
+
+head(combined[1])
 ####Clonotype analysis####
 ###Data visualization
 ###Percent/total number of unique clonotypes 
@@ -61,6 +63,7 @@ quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGH") + ggtitle
 quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGL") + ggtitle("IGL")#by IGL
 quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGL") + ggtitle("IGL")#by IGL
 
+?quantContig
 ###Abundance of clonotypes
 Abundance_clonotypes <- abundanceContig(combined, cloneCall = "gene", scale = F, exportTable = T)
 Abundance_clonotypes <- Abundance_clonotypes %>%
