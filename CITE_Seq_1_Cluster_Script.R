@@ -51,8 +51,8 @@ DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size
 DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase") + ggtitle("Coloured by cell cycle stage")
 
 ###Feature and violin plot
-FeaturePlot(experiment, features = c("CD8A"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "BCL6")
+FeaturePlot(experiment, features = c("APOE"), reduction = "wnn.umap")
+VlnPlot(experiment, feature = "APOE")
 
 
 ####Finding all the markers####
@@ -188,8 +188,8 @@ Cluster_40 <- FindMarkers(experiment, ident.1 = 40, assay = "RNA")
 Cluster_40_adt <- FindMarkers(experiment, ident.1 = 40, assay = "ADT")
 
 ###Export Cluster-associated gene lists
-Cluster_2_exp <- tibble::rownames_to_column(Cluster_2, "Genes")
-write_xlsx(Cluster_2_exp, "\\Cluster_2_exp.xlsx")
+Cluster_4_exp <- tibble::rownames_to_column(Cluster_4, "Genes")
+write_xlsx(Cluster_4_exp, "Cluster_gene_signatures/Cluster_4/Cluster_4.xlsx")
 
 ####TFIDF####
 ###Define the function
@@ -217,6 +217,7 @@ tfidf = function(data,target,universe){
 }
 
 ###Select cluster
+TFIDF.c0 <- WhichCells(object = experiment, ident = 0)
 TFIDF.c1 <- WhichCells(object = experiment, ident = 1)
 TFIDF.c2 <- WhichCells(object = experiment, ident = 2)
 TFIDF.c3 <- WhichCells(object = experiment, ident = 3)
@@ -262,6 +263,7 @@ TFIDF.c40 <- WhichCells(object = experiment, ident = 40)
 DefaultAssay(experiment)<-"RNA"
 
 ##Run function - Higher TFIDF score and lower q value genes are more uniquely expressed
+TFIDF.c0.genes <- tfidf(GetAssayData(experiment), TFIDF.c0, colnames(experiment))
 TFIDF.c1.genes <- tfidf(GetAssayData(experiment), TFIDF.c1, colnames(experiment))
 TFIDF.c2.genes <- tfidf(GetAssayData(experiment), TFIDF.c2, colnames(experiment))
 TFIDF.c3.genes <- tfidf(GetAssayData(experiment), TFIDF.c3, colnames(experiment))
@@ -303,8 +305,8 @@ TFIDF.c39.genes <- tfidf(GetAssayData(experiment), TFIDF.c39, colnames(experimen
 TFIDF.c40.genes <- tfidf(GetAssayData(experiment), TFIDF.c40, colnames(experiment))
 
 ###Export table
-TFIDF_cluster_12 <- tibble::rownames_to_column(TFIDF.c12.genes, "Genes")
-write_xlsx(TFIDF_cluster_12, "\\TFIDF_cluster_12.xlsx")
+TFIDF_cluster_4 <- tibble::rownames_to_column(TFIDF.c4.genes, "Genes")
+write_xlsx(TFIDF_cluster_4, "Cluster_gene_signatures/Cluster_4/TFIDF_cluster_4.xlsx")
 
 ####Addmodulescore####
 ###Load gene signature file
@@ -349,13 +351,27 @@ experiment <-AddModuleScore(experiment, features = IL6sig_list, name = "IL6sig_e
 VlnPlot(experiment, c("IL6sig_enrichment1"), pt.size  = 0.1)+NoLegend()
 FeaturePlot(experiment, c("PI3Ksig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
 
-####Subsetting unknown cluster####
-Unknown_cells <- subset(experiment, idents = c(2, 12, 27, 33))
-Unknown_cells <- FindClusters(Unknown_cells, resolution = 0.8, verbose = FALSE, graph.name = "wsnn")
-Unknown_cells <- RunUMAP(Unknown_cells, dims = 1:30, reduction.name = "unknown.umap")
-DimPlot(Unknown_cells, label = TRUE, cols=colbig, reduction = "unknown.umap", label.size = 2.5) + NoLegend()
-FeaturePlot(Unknown_cells, "KLS", reduction = "unknown.umap")
+####Subsetting of clusters####
+B_cell_c4 <- subset(experiment, idents = 4)
 
+B_cell_c4 = SCTransform(B_cell_c4, verbose = TRUE)
+top20_c4 = head(VariableFeatures(B_cell_c4), 20)
+plot_top20_c4 = VariableFeaturePlot(B_cell_c4)
+plot_top20_c4 = LabelPoints(plot = plot_top20_c4, points = top20_c4, repel = TRUE, xnudge = 0, ynudge = 0)
+
+B_cell_c4 <- RunPCA(B_cell_c4, verbose = FALSE, features = VariableFeatures(object = B_cell_c4))
+print(B_cell_c4[["pca"]], dims = 1:5, nfeatures = 5)
+pca_variance_c4 <- B_cell_c4@reductions$pca@stdev^2
+plot(pca_variance_c4/sum(pca_variance_c4), 
+     ylab="Proportion of variance explained", 
+     xlab="Principal component")
+abline(h = 0.01)
+
+
+B_cell_c4 <- FindNeighbors(B_cell_c4, dims = 1:20)
+B_cell_c4 <- FindClusters(B_cell_c4, resolution = 0.1, verbose = FALSE)
+B_cell_c4 <- RunUMAP(B_cell_c4, reduction = 'pca', dims = 1:23, reduction.name = "B_cell_c4.umap")
+DimPlot(B_cell_c4, label = TRUE, cols=colbig) +  ggtitle("RNA Clustering")
 
 
 
