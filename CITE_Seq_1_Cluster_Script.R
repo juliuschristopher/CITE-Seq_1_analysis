@@ -45,11 +45,38 @@ DefaultAssay(experiment) <- "ADT"
 plot_mouse <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident") + ggtitle("Coloured by mouse")
 
 ###Umap-wnn by sample
-DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, split.by = "orig.ident", ncol = 2) + NoLegend()
+DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2, split.by = "orig.ident") + NoLegend()
+
+Sample.a <- subset(experiment, subset = orig.ident == "a")
+DimPlot(Sample.a, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+Sample.b <- subset(experiment, subset = orig.ident == "b")
+DimPlot(Sample.b, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+Sample.c1 <- subset(experiment, subset = orig.ident == "c1")
+DimPlot(Sample.c1, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+Sample.c2 <- subset(experiment, subset = orig.ident == "c2")
+DimPlot(Sample.c2, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+Sample.d1 <- subset(experiment, subset = orig.ident == "d1")
+DimPlot(Sample.d1, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+Sample.d2 <- subset(experiment, subset = orig.ident == "d2")
+DimPlot(Sample.d2, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+Sample.f <- subset(experiment, subset = orig.ident == "f")
+DimPlot(Sample.f, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2) + NoLegend()
+
+
+
+head(experiment[[]])
 
 ###Umap-wnn by cell cycle stage
 DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase") + ggtitle("Coloured by cell cycle stage")
 
+
+?DimPlot
 ###Feature and violin plot
 FeaturePlot(experiment, features = c("APOE"), reduction = "wnn.umap")
 VlnPlot(experiment, feature = "APOE")
@@ -188,8 +215,8 @@ Cluster_40 <- FindMarkers(experiment, ident.1 = 40, assay = "RNA")
 Cluster_40_adt <- FindMarkers(experiment, ident.1 = 40, assay = "ADT")
 
 ###Export Cluster-associated gene lists
-Cluster_4_exp <- tibble::rownames_to_column(Cluster_4, "Genes")
-write_xlsx(Cluster_4_exp, "Cluster_gene_signatures/Cluster_4/Cluster_4.xlsx")
+Cluster_5_exp <- tibble::rownames_to_column(Cluster_5, "Genes")
+write_xlsx(Cluster_5_exp, "Cluster_gene_signatures/Cluster_5/Cluster_5.xlsx")
 
 ####TFIDF####
 ###Define the function
@@ -305,8 +332,8 @@ TFIDF.c39.genes <- tfidf(GetAssayData(experiment), TFIDF.c39, colnames(experimen
 TFIDF.c40.genes <- tfidf(GetAssayData(experiment), TFIDF.c40, colnames(experiment))
 
 ###Export table
-TFIDF_cluster_4 <- tibble::rownames_to_column(TFIDF.c4.genes, "Genes")
-write_xlsx(TFIDF_cluster_4, "Cluster_gene_signatures/Cluster_4/TFIDF_cluster_4.xlsx")
+TFIDF_cluster_5 <- tibble::rownames_to_column(TFIDF.c5.genes, "Genes")
+write_xlsx(TFIDF_cluster_5, "Cluster_gene_signatures/Cluster_5/TFIDF_cluster_5.xlsx")
 
 ####Addmodulescore####
 ###Load gene signature file
