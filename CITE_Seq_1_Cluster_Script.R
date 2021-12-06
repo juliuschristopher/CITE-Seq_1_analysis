@@ -215,8 +215,15 @@ Cluster_40 <- FindMarkers(experiment, ident.1 = 40, assay = "RNA")
 Cluster_40_adt <- FindMarkers(experiment, ident.1 = 40, assay = "ADT")
 
 ###Export Cluster-associated gene lists
-Cluster_5_exp <- tibble::rownames_to_column(Cluster_5, "Genes")
-write_xlsx(Cluster_5_exp, "Cluster_gene_signatures/Cluster_5/Cluster_5.xlsx")
+Cluster_10_exp <- tibble::rownames_to_column(Cluster_10, "Genes")
+write_xlsx(Cluster_10_exp, "Cluster_gene_signatures/Cluster_10/Cluster_10.xlsx")
+
+####Comparing two clusters####
+cluster9vs0.markers <- FindMarkers(experiment, ident.1 = 9, ident.2 = 0)  #markers which differ in cluster 9 vs 0
+
+Cluster_9vs0 <- tibble::rownames_to_column(cluster9vs0.markers, "Genes")
+write_xlsx(Cluster_9vs0, "Cluster_gene_signatures/Cluster_9/Cluster_9vs0.xlsx")
+
 
 ####TFIDF####
 ###Define the function
@@ -332,8 +339,8 @@ TFIDF.c39.genes <- tfidf(GetAssayData(experiment), TFIDF.c39, colnames(experimen
 TFIDF.c40.genes <- tfidf(GetAssayData(experiment), TFIDF.c40, colnames(experiment))
 
 ###Export table
-TFIDF_cluster_5 <- tibble::rownames_to_column(TFIDF.c5.genes, "Genes")
-write_xlsx(TFIDF_cluster_5, "Cluster_gene_signatures/Cluster_5/TFIDF_cluster_5.xlsx")
+TFIDF_cluster_10 <- tibble::rownames_to_column(TFIDF.c10.genes, "Genes")
+write_xlsx(TFIDF_cluster_10, "Cluster_gene_signatures/Cluster_10/TFIDF_cluster_10.xlsx")
 
 ####Addmodulescore####
 ###Load gene signature file
