@@ -75,11 +75,12 @@ head(experiment[[]])
 ###Umap-wnn by cell cycle stage
 DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase") + ggtitle("Coloured by cell cycle stage")
 
-
-?DimPlot
 ###Feature and violin plot
-FeaturePlot(experiment, features = c("APOE"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "APOE")
+DefaultAssay(experiment)<-"RNA"
+DefaultAssay(experiment)<-"ADT"
+
+FeaturePlot(experiment, features = c("CXCR5"), reduction = "wnn.umap")
+VlnPlot(experiment, feature = "CD83")
 
 
 ####Finding all the markers####
@@ -215,14 +216,16 @@ Cluster_40 <- FindMarkers(experiment, ident.1 = 40, assay = "RNA")
 Cluster_40_adt <- FindMarkers(experiment, ident.1 = 40, assay = "ADT")
 
 ###Export Cluster-associated gene lists
-Cluster_10_exp <- tibble::rownames_to_column(Cluster_10, "Genes")
-write_xlsx(Cluster_10_exp, "Cluster_gene_signatures/Cluster_10/Cluster_10.xlsx")
+Cluster_16_exp <- tibble::rownames_to_column(Cluster_16, "Genes")
+write_xlsx(Cluster_16_exp, "Cluster_gene_signatures/Cluster_16/Cluster_16.xlsx")
 
 ####Comparing two clusters####
 cluster9vs0.markers <- FindMarkers(experiment, ident.1 = 9, ident.2 = 0)  #markers which differ in cluster 9 vs 0
+cluster12vs0.markers <- FindMarkers(experiment, ident.1 = 12, ident.2 = 0)
+cluster12vs9.markers <- FindMarkers(experiment, ident.1 = 12, ident.2 = 9)
 
-Cluster_9vs0 <- tibble::rownames_to_column(cluster9vs0.markers, "Genes")
-write_xlsx(Cluster_9vs0, "Cluster_gene_signatures/Cluster_9/Cluster_9vs0.xlsx")
+Cluster_12vs9 <- tibble::rownames_to_column(cluster12vs9.markers, "Genes")
+write_xlsx(Cluster_12vs9, "Cluster_gene_signatures/Cluster_12/Cluster_12vs9.xlsx")
 
 
 ####TFIDF####
@@ -309,6 +312,7 @@ TFIDF.c8.genes <- tfidf(GetAssayData(experiment), TFIDF.c8, colnames(experiment)
 TFIDF.c9.genes <- tfidf(GetAssayData(experiment), TFIDF.c9, colnames(experiment))
 TFIDF.c10.genes <- tfidf(GetAssayData(experiment), TFIDF.c10, colnames(experiment))
 TFIDF.c11.genes <- tfidf(GetAssayData(experiment), TFIDF.c11, colnames(experiment))
+TFIDF.c12.genes <- tfidf(GetAssayData(experiment), TFIDF.c12, colnames(experiment))
 TFIDF.c13.genes <- tfidf(GetAssayData(experiment), TFIDF.c13, colnames(experiment))
 TFIDF.c14.genes <- tfidf(GetAssayData(experiment), TFIDF.c14, colnames(experiment))
 TFIDF.c15.genes <- tfidf(GetAssayData(experiment), TFIDF.c15, colnames(experiment))
@@ -339,8 +343,8 @@ TFIDF.c39.genes <- tfidf(GetAssayData(experiment), TFIDF.c39, colnames(experimen
 TFIDF.c40.genes <- tfidf(GetAssayData(experiment), TFIDF.c40, colnames(experiment))
 
 ###Export table
-TFIDF_cluster_10 <- tibble::rownames_to_column(TFIDF.c10.genes, "Genes")
-write_xlsx(TFIDF_cluster_10, "Cluster_gene_signatures/Cluster_10/TFIDF_cluster_10.xlsx")
+TFIDF_cluster_16 <- tibble::rownames_to_column(TFIDF.c16.genes, "Genes")
+write_xlsx(TFIDF_cluster_16, "Cluster_gene_signatures/Cluster_16/TFIDF_cluster_16.xlsx")
 
 ####Addmodulescore####
 ###Load gene signature file
@@ -352,7 +356,16 @@ PI3Ksig_list <- list(Hallmark_sig$PI3K_AKT_MTOR_Signalling)
 Cholesterol_list <- list(Hallmark_sig$Cholesterol_Homeostasis)
 IL2sig_list <- list(Hallmark_sig$IL2_STAT5_Signalling)
 IL6sig_list <- list(Hallmark_sig$IL6_JAK_STAT3_Signalling)
-
+Breg_list <- list(Hallmark_sig$Breg)
+FO_vs_early.GC_B.cells <- list(Hallmark_sig$FO_B.cells_vs_Early.GC.B.cells)
+GSE12366_NAIVE_VS_MEMORY_BCELL_DN <- list(Hallmark_sig$GSE12366_NAIVE_VS_MEMORY_BCELL_DN)
+GSE12366_NAIVE_VS_MEMORY_BCELL_UP <- list(Hallmark_sig$GSE12366_NAIVE_VS_MEMORY_BCELL_UP)
+GSE12366_PLASMA_CELL_VS_MEMORY_BCELL_UP <- list(Hallmark_sig$GSE12366_PLASMA_CELL_VS_MEMORY_BCELL_UP)
+GSE12366_GC_VS_NAIVE_BCELL_UP <- (Hallmark_sig$GSE12366_GC_VS_NAIVE_BCELL_UP)
+GSE12366_GC_VS_NAIVE_BCELL_DN <- list(Hallmark_sig$GSE12366_GC_VS_NAIVE_BCELL_DN)
+GSE13411_NAIVE_VS_MEMORY_BCELL_UP <- list(Hallmark_sig$GSE13411_NAIVE_VS_MEMORY_BCELL_UP)
+GSE4142_NAIVE_VS_MEMORY_BCELL_DN <- list(Hallmark_sig$GSE4142_NAIVE_VS_MEMORY_BCELL_DN)
+GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP <- list(Hallmark_sig$GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP)
 
 ###convertMouseGeneList - function
 convertHumanGeneList <- function(x){
@@ -380,10 +393,21 @@ experiment <-AddModuleScore(experiment, features = PI3Ksig_list, name = "PI3Ksig
 experiment <-AddModuleScore(experiment, features = Cholesterol_list, name = "Cholesterol_enrichment")
 experiment <-AddModuleScore(experiment, features = IL2sig_list, name = "IL2sig_enrichment")
 experiment <-AddModuleScore(experiment, features = IL6sig_list, name = "IL6sig_enrichment")
+experiment <-AddModuleScore(experiment, features = Breg_list, name = "Breg.sig_enrichment")
+experiment <-AddModuleScore(experiment, features = FO_vs_early.GC_B.cells, name = "FO.vsGC.sig_enrichment")
+experiment <-AddModuleScore(experiment, features = GSE12366_NAIVE_VS_MEMORY_BCELL_DN, name = "GSE12366_NAIVE_VS_MEMORY_BCELL_DN")
+experiment <-AddModuleScore(experiment, features = GSE12366_NAIVE_VS_MEMORY_BCELL_UP, name = "GSE12366_NAIVE_VS_MEMORY_BCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE12366_PLASMA_CELL_VS_MEMORY_BCELL_UP, name = "GSE12366_PLASMA_CELL_VS_MEMORY_BCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE12366_GC_VS_NAIVE_BCELL_UP, name = "GSE12366_GC_VS_NAIVE_BCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE12366_GC_VS_NAIVE_BCELL_DN, name = "GSE12366_GC_VS_NAIVE_BCELL_DN")
+experiment <-AddModuleScore(experiment, features = GSE13411_NAIVE_VS_MEMORY_BCELL_UP, name = "GSE13411_NAIVE_VS_MEMORY_BCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE4142_NAIVE_VS_MEMORY_BCELL_DN, name = "GSE4142_NAIVE_VS_MEMORY_BCELL_DN")
+experiment <-AddModuleScore(experiment, features = GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP, name = "GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP")
+
 
 ###Visualise enrichment scores
-VlnPlot(experiment, c("IL6sig_enrichment1"), pt.size  = 0.1)+NoLegend()
-FeaturePlot(experiment, c("PI3Ksig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
+VlnPlot(experiment, c("GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP1"), pt.size  = 0.1)+NoLegend()
+FeaturePlot(experiment, c("FO.vsGC.sig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
 
 ####Subsetting of clusters####
 B_cell_c4 <- subset(experiment, idents = 4)
