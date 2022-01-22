@@ -18,6 +18,7 @@ library(airr)
 library(biomaRt)
 library(SeuratDisk)
 library(SeuratData)
+library(EnhancedVolcano)
 
 #Initial setup of colour palettes
 col = colorRampPalette(brewer.pal(12, 'Set3'))(20)
@@ -42,7 +43,7 @@ DefaultAssay(experiment) <- "ADT"
 
 ####Simple plotting####
 ###Umap-wnn by mouse
-plot_mouse <- DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident") + ggtitle("Coloured by mouse")
+plot_mouse <- DimPlot(experiment, label = FALSE,reduction = "wnn.umap", label.size = 2.5, group.by = "orig.ident") + ggtitle("Coloured by mouse") + 
 
 ###Umap-wnn by sample
 DimPlot(experiment, label = TRUE,cols=colbig, reduction = "wnn.umap", label.size = 2.5, ncol = 2, split.by = "orig.ident") + NoLegend()
@@ -74,13 +75,15 @@ head(experiment[[]])
 
 ###Umap-wnn by cell cycle stage
 DimPlot(experiment, label = TRUE,reduction = "wnn.umap", label.size = 2.5, group.by = "Phase") + ggtitle("Coloured by cell cycle stage")
+p3
 
 ###Feature and violin plot
 DefaultAssay(experiment)<-"RNA"
 DefaultAssay(experiment)<-"ADT"
 
-FeaturePlot(experiment, features = c("CXCR5"), reduction = "wnn.umap")
-VlnPlot(experiment, feature = "CD83")
+FeaturePlot(experiment, features = c("CD19", "B220"), reduction = "wnn.umap")
+VlnPlot(experiment, feature = "LY6A")
+
 
 
 ####Finding all the markers####
@@ -215,19 +218,32 @@ Cluster_39_adt <- FindMarkers(experiment, ident.1 = 39, assay = "ADT")
 Cluster_40 <- FindMarkers(experiment, ident.1 = 40, assay = "RNA")
 Cluster_40_adt <- FindMarkers(experiment, ident.1 = 40, assay = "ADT")
 
+Cluster_41 <- FindMarkers(experiment, ident.1 = 41, assay = "RNA")
+Cluster_41_adt <- FindMarkers(experiment, ident.1 = 41, assay = "ADT")
+
 ###Export Cluster-associated gene lists
-Cluster_16_exp <- tibble::rownames_to_column(Cluster_16, "Genes")
-write_xlsx(Cluster_16_exp, "Cluster_gene_signatures/Cluster_16/Cluster_16.xlsx")
+Cluster_0_exp <- tibble::rownames_to_column(Cluster_0, "Genes")
+write_xlsx(Cluster_19_exp, "Cluster_gene_signatures/Cluster_19/Cluster_19.xlsx")
 
 ####Comparing two clusters####
 cluster9vs0.markers <- FindMarkers(experiment, ident.1 = 9, ident.2 = 0)  #markers which differ in cluster 9 vs 0
 cluster12vs0.markers <- FindMarkers(experiment, ident.1 = 12, ident.2 = 0)
 cluster12vs9.markers <- FindMarkers(experiment, ident.1 = 12, ident.2 = 9)
 
+cluster28vs10.markers <- FindMarkers(experiment, ident.1 = 28, ident.2 = 10)
+
 Cluster_12vs9 <- tibble::rownames_to_column(cluster12vs9.markers, "Genes")
 write_xlsx(Cluster_12vs9, "Cluster_gene_signatures/Cluster_12/Cluster_12vs9.xlsx")
 
+####Get cells per cluster per identity####
+experiment@meta.data
+cell.numbers <- table(experiment@meta.data$wsnn_res.1, experiment@meta.data$orig.ident)
+cell.numbers <- as.data.frame.matrix(cell.numbers)
+cell.numbers <- tibble::rownames_to_column(cell.numbers, "Cluster")
+write_xlsx(cell.numbers, "cell.numbers.2.xlsx")
 
+
+cell.numbers.heatmap <- heatmap(cell.numbers, Rowv=NA, Colv=NA, col = cm.colors(256), scale="column", margins=c(5,10))
 ####TFIDF####
 ###Define the function
 tfidf = function(data,target,universe){
@@ -295,6 +311,7 @@ TFIDF.c37 <- WhichCells(object = experiment, ident = 37)
 TFIDF.c38 <- WhichCells(object = experiment, ident = 38)
 TFIDF.c39 <- WhichCells(object = experiment, ident = 39)
 TFIDF.c40 <- WhichCells(object = experiment, ident = 40)
+TFIDF.c41 <- WhichCells(object = experiment, ident = 41)
 
 ###Set to RNA assay
 DefaultAssay(experiment)<-"RNA"
@@ -341,10 +358,12 @@ TFIDF.c37.genes <- tfidf(GetAssayData(experiment), TFIDF.c37, colnames(experimen
 TFIDF.c38.genes <- tfidf(GetAssayData(experiment), TFIDF.c38, colnames(experiment))
 TFIDF.c39.genes <- tfidf(GetAssayData(experiment), TFIDF.c39, colnames(experiment))
 TFIDF.c40.genes <- tfidf(GetAssayData(experiment), TFIDF.c40, colnames(experiment))
+TFIDF.c41.genes <- tfidf(GetAssayData(experiment), TFIDF.c41, colnames(experiment))
+
 
 ###Export table
-TFIDF_cluster_16 <- tibble::rownames_to_column(TFIDF.c16.genes, "Genes")
-write_xlsx(TFIDF_cluster_16, "Cluster_gene_signatures/Cluster_16/TFIDF_cluster_16.xlsx")
+TFIDF_cluster_19 <- tibble::rownames_to_column(TFIDF.c19.genes, "Genes")
+write_xlsx(TFIDF_cluster_19, "Cluster_gene_signatures/Cluster_19/TFIDF_cluster_19.xlsx")
 
 ####Addmodulescore####
 ###Load gene signature file
@@ -366,6 +385,22 @@ GSE12366_GC_VS_NAIVE_BCELL_DN <- list(Hallmark_sig$GSE12366_GC_VS_NAIVE_BCELL_DN
 GSE13411_NAIVE_VS_MEMORY_BCELL_UP <- list(Hallmark_sig$GSE13411_NAIVE_VS_MEMORY_BCELL_UP)
 GSE4142_NAIVE_VS_MEMORY_BCELL_DN <- list(Hallmark_sig$GSE4142_NAIVE_VS_MEMORY_BCELL_DN)
 GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP <- list(Hallmark_sig$GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP)
+Bmem<- list(Hallmark_sig$Bmem)
+Switched_Bmem <- list(Hallmark_sig$Switched_Bmem)
+GSE13411_IGM_MEMORY_BCELL_VS_PLASMA_CELL_UP <- list(Hallmark_sig$GSE13411_IGM_MEMORY_BCELL_VS_PLASMA_CELL_UP)
+GSE13411_NAIVE_VS_MEMORY_BCELL_UP.1 <-list(Hallmark_sig$GSE13411_NAIVE_VS_MEMORY_BCELL_UP.1)
+GSE4142_NAIVE_VS_MEMORY_BCELL_DN.1 <- list(Hallmark_sig$GSE4142_NAIVE_VS_MEMORY_BCELL_DN.1)
+E1_B220neg_vs_pos <-  list(Hallmark_sig$E1_B220neg_vs_pos)
+WT_B220neg_vs_pos <- list(Hallmark_sig$WT_B220neg_vs_pos)
+B220neg_E1_vs_WT <- list(Hallmark_sig$B220neg_E1_vs_WT)
+GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_UP <- list(Hallmark_sig$GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_UP)
+GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_DN <- list(Hallmark_sig$GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_DN)
+GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_UP <- list(Hallmark_sig$GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_UP)
+GSE37301_HEMATOPOIETIC_STEM_CELL_VS_PRO_BCELL_UP <- list(Hallmark_sig$GSE37301_HEMATOPOIETIC_STEM_CELL_VS_PRO_BCELL_UP)
+GSE37301_HEMATOPOIETIC_STEM_CELL_VS_COMMON_LYMPHOID_PROGENITOR_UP <- list(Hallmark_sig$GSE37301_HEMATOPOIETIC_STEM_CELL_VS_COMMON_LYMPHOID_PROGENITOR_UP)
+GSE37301_HEMATOPOIETIC_STEM_CELL_VS_GRAN_MONO_PROGENITOR_UP <- list(Hallmark_sig$GSE37301_HEMATOPOIETIC_STEM_CELL_VS_GRAN_MONO_PROGENITOR_UP)
+GSE37301_HEMATOPOIETIC_STEM_CELL_VS_MULTIPOTENT_PROGENITOR_UP <- list(Hallmark_sig$GSE37301_HEMATOPOIETIC_STEM_CELL_VS_MULTIPOTENT_PROGENITOR_UP)
+
 
 ###convertMouseGeneList - function
 convertHumanGeneList <- function(x){
@@ -403,10 +438,25 @@ experiment <-AddModuleScore(experiment, features = GSE12366_GC_VS_NAIVE_BCELL_DN
 experiment <-AddModuleScore(experiment, features = GSE13411_NAIVE_VS_MEMORY_BCELL_UP, name = "GSE13411_NAIVE_VS_MEMORY_BCELL_UP")
 experiment <-AddModuleScore(experiment, features = GSE4142_NAIVE_VS_MEMORY_BCELL_DN, name = "GSE4142_NAIVE_VS_MEMORY_BCELL_DN")
 experiment <-AddModuleScore(experiment, features = GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP, name = "GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP")
+experiment <-AddModuleScore(experiment, features = Bmem, name = "Bmem")
+experiment <-AddModuleScore(experiment, features = Switched_Bmem, name = "Switched_Bmem")
+experiment <-AddModuleScore(experiment, features = GSE13411_IGM_MEMORY_BCELL_VS_PLASMA_CELL_UP, name = "GSE13411_IGM_MEMORY_BCELL_VS_PLASMA_CELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE13411_NAIVE_VS_MEMORY_BCELL_UP.1, name = "GSE13411_NAIVE_VS_MEMORY_BCELL_UP.1")
+experiment <-AddModuleScore(experiment, features = GSE4142_NAIVE_VS_MEMORY_BCELL_DN.1, name = "GSE4142_NAIVE_VS_MEMORY_BCELL_DN.1")
+experiment <-AddModuleScore(experiment, features = E1_B220neg_vs_pos, name = "E1_B220neg_vs_pos")
+experiment <-AddModuleScore(experiment, features = WT_B220neg_vs_pos, name = "WT_B220neg_vs_pos")
+experiment <-AddModuleScore(experiment, features = B220neg_E1_vs_WT, name = "B220neg_E1_vs_WT")
+experiment <-AddModuleScore(experiment, features = GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_UP, name = "GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_DN, name = "GSE32901_NAIVE_VS_TH17_ENRICHED_CD4_TCELL_DN")
+experiment <-AddModuleScore(experiment, features = GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_UP, name = "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_CD4_TCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE37301_HEMATOPOIETIC_STEM_CELL_VS_PRO_BCELL_UP, name = "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_PRO_BCELL_UP")
+experiment <-AddModuleScore(experiment, features = GSE37301_HEMATOPOIETIC_STEM_CELL_VS_COMMON_LYMPHOID_PROGENITOR_UP, name = "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_COMMON_LYMPHOID_PROGENITOR_UP")
+experiment <-AddModuleScore(experiment, features = GSE37301_HEMATOPOIETIC_STEM_CELL_VS_GRAN_MONO_PROGENITOR_UP, name = "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_GRAN_MONO_PROGENITOR_UP")
+experiment <-AddModuleScore(experiment, features = GSE37301_HEMATOPOIETIC_STEM_CELL_VS_MULTIPOTENT_PROGENITOR_UP, name = "GSE37301_HEMATOPOIETIC_STEM_CELL_VS_MULTIPOTENT_PROGENITOR_UP")
 
 
 ###Visualise enrichment scores
-VlnPlot(experiment, c("GSE4142_GC_BCELL_VS_MEMORY_BCELL_UP1"), pt.size  = 0.1)+NoLegend()
+VlnPlot(experiment, c("GSE37301_HEMATOPOIETIC_STEM_CELL_VS_MULTIPOTENT_PROGENITOR_UP1"), pt.size  = 0.1)+NoLegend()
 FeaturePlot(experiment, c("FO.vsGC.sig_enrichment1"),cols=c("Blue", "Yellow"), reduction = "wnn.umap")
 
 ####Subsetting of clusters####
@@ -430,6 +480,115 @@ B_cell_c4 <- FindNeighbors(B_cell_c4, dims = 1:20)
 B_cell_c4 <- FindClusters(B_cell_c4, resolution = 0.1, verbose = FALSE)
 B_cell_c4 <- RunUMAP(B_cell_c4, reduction = 'pca', dims = 1:23, reduction.name = "B_cell_c4.umap")
 DimPlot(B_cell_c4, label = TRUE, cols=colbig) +  ggtitle("RNA Clustering")
+
+####Labeling of clusters####
+new.cluster.ids <- c("Follicular B cells", "Germinal Centre B cells", "T regulatory cells (1)", 
+                     "Stem-like Cells", "B220- B cells", "Th17 cells", "CD8+ Central Memory cells", "Marginal Zone B cells (1)", 
+                     "Naïve CD8+ T cells", "Follicular B cells - IGLV1, IGLC1", "Naïve CD4+ T cells", "Neutrophils", "Follicular B cells - IGKV1-135", 
+                     "T follicular helper cells", "Plasma Cells", "Follicular B cells - IGKV10-96", "Double positive T cells", "Monocytes (1)", 
+                     "Follicular B cells - IGKV1-117", "Granulocytes", "T regulatory cells (2)", "Follicular B cells - IGKV1-100", "Natural Killer Cells", 
+                     "Macrophages", "Th1  cells", "Dendrictic cells (1)", "Innate B cells", "Transitional B cells", "Naïve CD4+ T cells (2)", 
+                     "Dendritic Cells (2)", "G2M  Phase cells (1)", "G2M Phase (2)", "Mast cells/Basophils", "Doublets", 
+                     "G2M Phase (3)", "G2M Phase (4)", "Follicular B cells (2)", 
+                     "Monocytes (2)", "Marginal Zone B cells (2)", "Megakaryocytes", "Dendritic Cells (3)", "Follicular B cells (3)")
+names(new.cluster.ids) <- levels(experiment1)
+experiment1 <- RenameIdents(experiment1, new.cluster.ids)
+DimPlot(experiment1, reduction = "wnn.umap", label = F) + NoLegend()
+DimPlot(experiment1, reduction = "wnn.umap", label = TRUE, pt.size = 0.5, label.size = 3.5, repel = T) + NoLegend()
+?DimPlot
+
+FeaturePlot(experiment1, reduction = "wnn.umap", features = c("CD19", "CD3E", "CD4", "CD8A"))
+FeaturePlot(experiment1, reduction = "wnn.umap", features = c( "FCGR3", "PRDM1", "KLRD1", "CCR3"))
+
+Sample.a <- subset(experiment1, subset = orig.ident == "a")
+Sample.a.plot <- DimPlot(Sample.a, label = T,  pt.size = 0.5, label.size = 3.5, repel = T, reduction = "wnn.umap") + NoLegend()
+
+Sample.b <- subset(experiment1, subset = orig.ident == "b")
+Sample.b.plot <- DimPlot(Sample.b, label = T,  pt.size = 0.5, label.size = 3.5, repel = T, reduction = "wnn.umap") + NoLegend()
+
+Sample.c1 <- subset(experiment1, subset = orig.ident == "c1")
+Sample.c1.plot <- DimPlot(Sample.c1, label = T, pt.size = 0.5, label.size = 3.5, repel = T, reduction = "wnn.umap") + NoLegend()
+
+Sample.c2 <- subset(experiment1, subset = orig.ident == "c2")
+Sample.c2.plot <- DimPlot(Sample.c2, label = T, pt.size = 0.5, label.size = 3.5, repel = T,  reduction = "wnn.umap") + NoLegend()
+
+Sample.d1 <- subset(experiment1, subset = orig.ident == "d1")
+Sample.d1.plot <- DimPlot(Sample.d1, label = T,  pt.size = 0.5, label.size = 3.5, repel = T, reduction = "wnn.umap") + NoLegend()
+
+Sample.d2 <- subset(experiment1, subset = orig.ident == "d2")
+Sample.d2.plot <- DimPlot(Sample.d2, label = T,  pt.size = 0.5, label.size = 3.5, repel = T, reduction = "wnn.umap") + NoLegend()
+
+Sample.f <- subset(experiment1, subset = orig.ident == "f")
+Sample.f.plot <- DimPlot(Sample.f, label = T,  pt.size = 0.5, label.size = 3.5, repel = T, reduction = "wnn.umap") + NoLegend()
+
+####Data visualisation####
+###DotPlot
+DefaultAssay(experiment) <- "RNA"
+
+DotPlot(experiment1, features = features1) + RotatedAxis() + theme_bw()
+
+FeaturePlot(experiment1, features = c("CD8a", "CD4"), blend = TRUE, reduction = "wnn.umap") + RotatedAxis()
+
+EnhancedVolcano(Cluster_3_adt,
+                lab = rownames(Cluster_3_adt),
+                x = 'avg_log2FC',
+                y = 'p_val_adj',
+                ylim = c(0, 310),
+                xlim = c(-2.5,30),
+                title = 'Cluster 3 vs all other clusters',
+                pointSize = 2.0,
+                labSize = 6.0)
+?EnhancedVolcano
+
+####ssGSEA####
+library(escape)
+library(dittoSeq)
+library(SingleCellExperiment)
+
+## We'll use the HALLMARK gene set collection ("H")
+GS.hallmark <- getGeneSets(library = "H")
+
+## Enrichment
+ES.experiment1 <- enrichIt(obj = experiment1, gene.sets = GS.hallmark, groups = 1000, cores = 2)
+experiment1 <- Seurat::AddMetaData(experiment1, ES.experiment1)
+head(experiment1@meta.data)
+
+## Visualise enrichment
+colors <- colorRampPalette(c("#0348A6", "#7AC5FF", "#C6FDEC", "#FFB433", "#FF4B20"))
+
+# Heatmap
+dittoHeatmap(experiment1, genes = NULL, metas = names(ES.experiment1), 
+             annot.by = "seurat_clusters", 
+             fontsize = 7, 
+             cluster_cols = TRUE,
+             heatmap.colors = colors(50))
+
+dittoHeatmap(experiment1, genes = NULL, 
+             metas = c("HALLMARK_APOPTOSIS", "HALLMARK_DNA_REPAIR", "HALLMARK_P53_PATHWAY"), 
+             annot.by = "seurat_clusters", 
+             fontsize = 7,
+             heatmap.colors = colors(50))
+
+Cluster.3 <- subset(experiment1, subset = seurat_clusters == "3")
+Cluster.5 <- subset(experiment1, subset = seurat_clusters == "5")
+
+dittoHeatmap(Cluster.3, genes = NULL, 
+             metas = c("HALLMARK_APOPTOSIS", "HALLMARK_DNA_REPAIR", "HALLMARK_P53_PATHWAY"), 
+             annot.by = "seurat_clusters", 
+             fontsize = 7,
+             heatmap.colors = colors(50))
+
+dittoHeatmap(Cluster.5, genes = NULL, metas = names(ES.experiment1), 
+             annot.by = "seurat_clusters", 
+             fontsize = 7, 
+             cluster_cols = TRUE,
+             heatmap.colors = colors(50))
+
+# Violoin Plot
+multi_dittoPlot(experiment1, vars = c("HALLMARK_APOPTOSIS"), 
+                group.by = "seurat_clusters", plots = c("jitter", "vlnplot", "boxplot"), 
+                ylab = "Enrichment Scores", 
+                theme = theme_classic() + theme(plot.title = element_text(size = 10)))
 
 
 

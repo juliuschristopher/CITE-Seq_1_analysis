@@ -58,10 +58,16 @@ head(combined[1])
 quantContig(combined, cloneCall = "gene+nt", scale = T) #percent of unique clonotypes of total size of the size of clonotyeps
 quantContig(combined, cloneCall = "gene+nt", scale = F) #number of uniqe clonotypes
 
-quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGH") + ggtitle("IGH")#by IGH
+quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGH") + ggtitle("IGH") +
+  scale_fill_brewer(palette = "PuBu")#by IGH
+
 quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGH") + ggtitle("IGH")#by IGH
-quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGL") + ggtitle("IGL")#by IGL
+
+quantContig(combined, cloneCall = "gene+nt", scale = T, chain = "IGL") + ggtitle("IGL") +
+  scale_fill_brewer(palette = "PuBu")#by IGL
+
 quantContig(combined, cloneCall = "gene+nt", scale = F, chain = "IGL") + ggtitle("IGL")#by IGL
+
 
 ?quantContig
 ###Abundance of clonotypes
@@ -80,9 +86,10 @@ lengthContig(combined, cloneCall = "nt")
 compareClonotypes(combined, samples = c("a", "b"), cloneCall = "aa", graph = "alluvial") #Computationally intense
 
 ###Visualise Gene Usage
-vizGenes(combined, gene = "V", chain = "IGH", plot = "bar", order = "variance", scale = TRUE)
-vizGenes(combined, gene = "V", chain = "IGL", plot = "bar", order = "variance", scale = TRUE)
+vizGenes(combined, gene = "C", chain = "IGH", plot = "bar", order = "variance", scale = TRUE)
+vizGenes(combined, gene = "C", chain = "IGL", plot = "bar", order = "variance", scale = TRUE)
 
+vizGenes(combined, gene = "V", chain = "IGH", plot = "heatmap", scale = TRUE, order = "gene")
 vizGenes(combined, gene = "V", chain = "IGL", plot = "heatmap", scale = TRUE, order = "gene")
 
 ###Clonal overlap
@@ -96,3 +103,32 @@ clonalProportion(combined, cloneCall = "nt")
 ###Clonal Homeostasis
 clonalHomeostasis(combined, cloneCall = "gene")
 clonalHomeostasis(combined, cloneCall = "nt")
+
+###Clonal Overlay
+clonalOverlay(experiment, reduction = "wnn.umap", 
+              freq.cutpoint = 10, bins = 10, facet = "orig.ident") + 
+  guides(color = FALSE)
+
+###Highlight certain clonotypes
+experiment1 <- highlightClonotypes(experiment, cloneCall= "aa", sequence = c("IGHM"))
+DimPlot(experiment1, group.by = "highlight")
+
+?highlightClonotypes()
+experiment1[[]]
+
+occupiedscRepertoire(experiment, x.axis = "cluster")
+
+####Clonal Network analysis####
+
+clonalNetwork(experiment1, 
+              reduction = "wnn.umap", 
+              identity = "cluster",
+              filter.identity = 15,
+              cloneCall = "gene")
+
+clonalNetwork(experiment1, 
+              reduction = "wnn.umap", 
+              identity = "cluster",
+              filter.clones = 10,
+              filter.identity = NULL,
+              cloneCall = "aa")

@@ -1,4 +1,4 @@
-## ##CITE-Seq 1 Script - Seurat object generation####
+## ##CITE-Seq 1 Script - filtering out BCR genes####
 ####Setup####
 #Load required packages
 library(Seurat)
@@ -360,7 +360,6 @@ experiment
 head(experiment[[]])
 SaveH5Seurat(experiment, overwrite = TURE)
 
-
 DefaultAssay(experiment) <- "RNA"
 DefaultAssay(experiment) <- "ADT"
 ###Match the RNA Names to the Antibodies, this should be checked
@@ -368,14 +367,8 @@ list1=c(rownames(a_ab.data))
 list2=c("PTPRC","FAS","CD19","IGHM","CR2","FCER2A","CD93","CD83","CD86","IGHD","CD8A","SELL","CD44","CD4","CXCR5","PDCD1","IL2RA","CD274","PDCD1LG2","CTLA4","CD80","CD40","CD69","ICOS","CD38","TNFRSF18")
 
 ####Clustree analysis####
+
 experiment <- FindClusters(experiment, graph.name = "wsnn", algorithm = 3, resolution = 1.0, verbose = TRUE)
 clustree(experiment, prefix = "wsnn_res.") + theme(legend.position="bottom")#1.0
 
 
-?SaveH5Seurat
-SaveH5Seurat(experiment, "experiment", overwrite = TURE)
-head(experiment[[]])
-
-experiment1 <- DietSeurat(experiment)
-head(experiment1[[]])
-SaveH5Seurat(experiment1, "experiment1", overwrite = TURE)
