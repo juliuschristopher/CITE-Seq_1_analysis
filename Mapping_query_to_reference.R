@@ -10,6 +10,8 @@ library(SingleCellExperiment)
 library(iSEE)
 library(scran)
 library(GEOquery)
+library(Seurat)
+library(RcmdrMisc)
 
 ####Azimuth####
 ###Save Seurat objects in smaller size format
@@ -76,7 +78,7 @@ head(reference.data.seurat[[]])
 load(file.choose("NicheData10x.rda"), verbose = TRUE)
 head(NicheData10x[[]])
 colnames(NicheData10x[[]])
-
+DimPlot(NicheData10x)
 reference <- NicheData10x
 Idents(reference) <- levels(NicheData10x)
 head(NicheData10x[[]])
@@ -111,7 +113,7 @@ DefaultAssay(reference) <- "SCT"
 DefaultAssay(query) <- "SCT"
 
 #Find anchors
-anchors <- FindTransferAnchors(reference = reference, query = query, dims = 1:407, approx = FALSE)
+anchors <- FindTransferAnchors(reference = reference, query = query, dims = 1:20, approx = FALSE)
 
 anchors <- FindTransferAnchors(reference = reference, query = query, normalization.method = "SCT", dims = 1:405, approx = FALSE)
 
@@ -119,9 +121,48 @@ anchors <- FindTransferAnchors(reference = reference, query = query, normalizati
 predictions <- TransferData(anchorset = anchors,refdata = reference$ct)
 
 query <- AddMetaData(object = query, metadata = predictions)
-DimPlot(query, label = TRUE, group.by = "predicted.id", repel = TRUE, reduction = "wnn.umap") +  ggtitle("Query")
-
+DimPlot(query, label = TRUE, split.by = "orig.ident", repel = TRUE, reduction = "wnn.umap", raster = T) +  ggtitle("Query")
+predictions$prediction.score.Classical.Monocytes
+FeaturePlot(query,"prediction.score.Classical.Monocytes", reduction = "wnn.umap")
+VlnPlot(query,"percent.mt", pt.size = 0 )+NoLegend()
 head(query[[]])
+
+query@meta.data[,'Annot'] <-Idents(query)
+predictions$prediction.score.max
+Data<-query@meta.data
+Data$orig.ident
+library(dplyr)
+Forest <-Data %>% 
+  group_by(`Annot`) %>% 
+  summarize_all(mean)
+Forest<-as.data.frame(Forest)
+rownames(Forest)<-Forest$Annot
+Forest<-Forest[,c(28:50)]
+final<-t(Forest)
+
+pheatmap::pheatmap(final, cluster_rows = T, cluster_cols = T,show_rownames = T, show_colnames = T,
+                   cellwidth = 10,cellheight = 10, angle_col = 45)
+
+number_perCluster<- table(query$Annot,query$predicted.id)
+
+percents<-rowPercents(number_perCluster)
+dim(percents)
+percents<-percents[,c(-25,-26)]
+my.colors <- viridisLite::viridis(n = 100, option = "D")
+colfunc <- colorRampPalette(c("white" ,"navy"))
+colors3<-colfunc(100)
+
+pheatmap::pheatmap(t(percents), cluster_rows = T, cluster_cols = T,show_rownames = T, show_colnames = T,
+                   cellwidth = 10,cellheight = 10, angle_col = 45, color = colors3)
+
+number_perCluster<- table(query@meta.data$predicted.id,query@meta.data$orig.ident)
+
+library(reshape2)
+DF1 <- melt(number_perCluster, id.var="Cluster")
+ggplot(DF1, aes(Var2,value , fill = Var1)) +
+  geom_bar(stat= "identity", position = "fill") +
+  xlab("Cluster") + ylab("Proportion of cluster")
+
 
 ####Assess query####
 cluster.vs.id <- query[[c("predicted.id", "seurat_clusters")]]
