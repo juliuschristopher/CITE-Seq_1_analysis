@@ -1,0 +1,5 @@
+﻿Follicular_B_cells,Marginal_zone_B_cells,Germinal_Centre_B_cells,DarK_Zone_B_cells,Light_Zone_B_cells,Transitional_B_cells,CD8_naive,CD4_naive,CD8_effector_memory,CD4_effector_memory,CD8_central_memory,CD4_central_memory,Tfh_cells,Treg_cells
+CD19,CD19,CD19,CD19,CD19,CD19,CD8a,CD4,CD8a,CD4,CD8a,CD4,CD4,CD4
+CD21,CD21,CD95,CD95,CD95,CD93,CD62L,CD62L,CD44,CD44,CD44,CD44,CXCR5,CD25
+CD23,IgM,,CXCR4,CD83,,,,,,CD62L,CD62L,PD-1,
+IgM,,,CD86,,,,,,,,,,
