@@ -162,7 +162,7 @@ experiment <- FindMultiModalNeighbors(
   dims.list = list(1:22, 1:24), modality.weight.name = "harmony.weight", weighted.nn.name = "harmony.weighted.nn", snn.graph.name = "harmony.wsnn")
 experiment <- FindClusters(experiment, graph.name = "harmony.wsnn", algorithm = 3, resolution = 1.5, verbose = TRUE) #1.5 for the resolution
 experiment <- RunUMAP(experiment, nn.name = "harmony.weighted.nn", reduction.name = "harmony.wnn.umap", reduction.key = "harmony.wnnUMAP_")
-experiment_p6 <- DimPlot(experiment, label = TRUE, reduction = "harmony.wnn.umap", pt.size = 1.2, label.size = 3, label.box = TRUE) +  ggtitle("Highlighted by cluster") + theme_bw() + NoLegend()
+experiment_p6 <- DimPlot(experiment, label = TRUE, reduction = "harmony.wnn.umap", pt.size = 0.5, label.size = 3, label.box = TRUE) +  ggtitle("Highlighted by cluster") + theme_bw() + NoLegend()
 experiment_p6 <- experiment_p6 + theme(plot.title = element_text(color="black", size=15, face="bold")) + xlab("UMAP1") + ylab("UMAP2")
 
 Batch_rna.umap <- DimPlot(experiment, label = TRUE, reduction = "rna.umap", pt.size = 1.3, label.size = 6, label.box = TRUE, group.by = "Batch") + theme_bw() + ggtitle("RNA UMAP") + NoLegend() + theme(plot.title = element_text(color="black", size=20, face="bold"))
@@ -175,10 +175,15 @@ Batch_harmony.wnn.umap <- DimPlot(experiment, label = TRUE, reduction = "harmony
 
 Batch_plot <- Batch_rna.umap + Batch_adt.umap + Batch_wnn.umap + Batch_harmony.rna.umap + Batch_harmony.adt.umap + Batch_harmony.wnn.umap
 
-plot01 <- FeaturePlot(experiment, features = "Cd19", reduction = "harmony.wnn.umap", cols = col_con, pt.size = 1.3) + theme_bw() + ggtitle("CD19 TotalSeqC-binding") +
+plot01 <- FeaturePlot(experiment, features = "Cd19", reduction = "harmony.wnn.umap", cols = col_con, pt.size = 0.05) + theme_bw() + ggtitle("CD19 TotalSeqC-binding") +
   xlab("UMAP1") + ylab("UMAP2") + theme(plot.title = element_text(color="black", size=15, face="bold"))
 
-grid.arrange(experiment_p6, plot01, ncol = 3)
+experiment_mouse <- DimPlot(experiment, label = FALSE ,reduction = "harmony.wnn.umap", group.by = "Genotype", pt.size = 0.5, label.size = 6, label.box = FALSE, repel = FALSE) +
+  theme_bw() + ggtitle("Highlighted by Genotype") +
+  xlab("UMAP1") + ylab("UMAP2") + theme(plot.title = element_text(color="black", size=15, face="bold"))
+
+
+grid.arrange(experiment_p6, experiment_mouse, ncol = 2)
 
 experiment
 head(experiment[[]])
